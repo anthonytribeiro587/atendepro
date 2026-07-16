@@ -1,11 +1,16 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-import DOMPurify from 'isomorphic-dompurify'
 
-function sanitize(s: string): string {
-  return DOMPurify.sanitize(s, { ALLOWED_TAGS: [] }).trim()
+function sanitize(value: string): string {
+  return value
+    .replace(/<[^>]*>/g, '')
+    .replace(/[\u0000-\u001F\u007F]/g, '')
+    .trim()
+}
+
+type CompleteOnboardingResult = {
+  redirectTo: string
 }
 
 export async function completeOnboarding(data: {
@@ -15,30 +20,51 @@ export async function completeOnboarding(data: {
   servicePrice: number
   serviceDuration: number
   slug?: string
-}) {
+}): Promise<CompleteOnboardingResult> {
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
 
-  if (!user) redirect('/login')
+  if (userError || !user) {
+    throw new Error('Sua sessão expirou. Entre novamente para continuar.')
+  }
 
-  const { data: business } = await supabase
+  const { data: business, error: businessError } = await supabase
     .from('businesses')
     .select('id, slug')
     .eq('owner_id', user.id)
     .maybeSingle()
 
-  if (!business) redirect('/login')
+  if (businessError || !business) {
+    throw new Error('Não foi possível localizar o negócio desta conta.')
+  }
 
-  // Sanitize and validate text fields
   const bizName = data.bizName ? sanitize(data.bizName).slice(0, 100) : undefined
-  const serviceName = sanitize(data.serviceName).slice(0, 100)
-  if (!serviceName) throw new Error('Service name is required')
+  const serviceName = sanitize(data.serviceName ?? '').slice(0, 100)
 
-  // Server-side slug validation (defence against bypassed client checks)
   const finalSlug = data.slug ?? business.slug
-  if (data.slug) {
-    if (!/^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/.test(data.slug)) {
-      throw new Error('Invalid slug format')
+  if (data.slug && !/^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/.test(data.slug)) {
+    throw new Error('O endereço escolhido para o negócio é inválido.')
+  }
+
+  // O primeiro serviço é opcional. A tela permite pular essa etapa.
+  if (serviceName) {
+    if (!Number.isFinite(data.servicePrice) || data.servicePrice < 0) {
+      throw new Error('Informe um preço válido para o serviço.')
+    }
+
+    const duration = Number.isFinite(data.serviceDuration) && data.serviceDuration > 0
+      ? Math.round(data.serviceDuration)
+      : 60
+
+    const { error: serviceError } = await supabase.from('services').insert({
+      business_id: business.id,
+      name: serviceName,
+      price: data.servicePrice,
+      duration_min: duration,
+    })
+
+    if (serviceError) {
+      throw new Error('Não foi possível cadastrar o primeiro serviço.')
     }
   }
 
@@ -53,24 +79,13 @@ export async function completeOnboarding(data: {
     .eq('id', business.id)
 
   if (updateError) {
-    // Most likely a unique constraint violation on slug
-    throw new Error(updateError.message)
+    throw new Error('Não foi possível concluir a configuração do negócio.')
   }
 
-  if (serviceName && data.servicePrice) {
-    await supabase.from('services').insert({
-      business_id: business.id,
-      name: serviceName,
-      price: data.servicePrice,
-      duration_min: data.serviceDuration || 60,
-    })
-  }
-
-  // If NEXT_PUBLIC_ROOT_DOMAIN is set we're running in SaaS mode → go to subdomain
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN
-  if (rootDomain && finalSlug) {
-    redirect(`https://${finalSlug}.${rootDomain}/dashboard`)
+  if (process.env.NEXT_PUBLIC_DEPLOYMENT_MODE === 'saas' && rootDomain && finalSlug) {
+    return { redirectTo: `https://${finalSlug}.${rootDomain}/dashboard` }
   }
 
-  redirect('/dashboard')
+  return { redirectTo: '/dashboard' }
 }
