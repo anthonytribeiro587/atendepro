@@ -1,18 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Header } from '@/components/layout/header'
-import { getTranslations } from 'next-intl/server'
 import { SettingsTabs } from './settings-tabs'
-import { EvolutionTestCard } from '@/components/evolution-test-card'
+import { EvolutionSettingsPortal } from '@/components/evolution-settings-portal'
 
 export default async function SettingsPage() {
   const supabase = createClient()
-  const t = await getTranslations('settings')
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // select('*') keeps this page compatible while optional notification and
-  // white-label columns are introduced incrementally in the database.
   const { data: business, error: businessError } = await supabase
     .from('businesses')
     .select('*')
@@ -25,6 +21,24 @@ export default async function SettingsPage() {
     console.error('[settings] business query failed:', businessError.message)
   }
   if (!business) redirect('/onboarding')
+
+  const runtimeBusiness = business as typeof business & {
+    evolution_api_url?: string | null
+    evolution_api_key?: string | null
+    evolution_instance?: string | null
+    evolution_enabled?: boolean | null
+  }
+
+  const evolutionConfigured = Boolean(
+    runtimeBusiness.evolution_enabled &&
+    runtimeBusiness.evolution_api_url &&
+    runtimeBusiness.evolution_api_key &&
+    runtimeBusiness.evolution_instance
+  )
+
+  // A chave da Evolution permanece no servidor e não é enviada ao navegador.
+  const safeBusiness = { ...runtimeBusiness }
+  delete (safeBusiness as { evolution_api_key?: string | null }).evolution_api_key
 
   const [
     { data: services },
@@ -48,23 +62,20 @@ export default async function SettingsPage() {
       .order('day_of_week'),
   ])
 
-  const evolutionInstance = process.env.EVOLUTION_INSTANCE || process.env.EVOLUTION_INSTANCE_NAME || null
-  const evolutionEnabled = Boolean(
-    process.env.EVOLUTION_API_URL &&
-    process.env.EVOLUTION_API_KEY &&
-    evolutionInstance
-  )
-
   return (
     <>
-      <Header title={t('pageTitle')} />
-      <EvolutionTestCard enabled={evolutionEnabled} instance={evolutionInstance} />
+      <Header title="Configurações" />
       <SettingsTabs
-        business={business}
+        business={safeBusiness}
         services={services ?? []}
         employees={employees ?? []}
         workingHours={businessHours ?? []}
         userEmail={user.email ?? ''}
+      />
+      <EvolutionSettingsPortal
+        initialApiUrl={runtimeBusiness.evolution_api_url ?? ''}
+        initialInstance={runtimeBusiness.evolution_instance ?? ''}
+        configured={evolutionConfigured}
       />
     </>
   )

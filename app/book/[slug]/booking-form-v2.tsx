@@ -106,7 +106,9 @@ export function PublicBookingFormV2({ business, services, employees, workingHour
   }, [employees])
 
   useEffect(() => {
-    if (!date || !selectedService) {
+    const service = selectedService
+
+    if (!date || !service) {
       setAvailableSlots([])
       setTime('')
       return
@@ -128,7 +130,7 @@ export function PublicBookingFormV2({ business, services, employees, workingHour
           return
         }
 
-        let slots = generateSlots(hours.open_time, hours.close_time, selectedService.duration_min)
+        let slots = generateSlots(hours.open_time, hours.close_time, service.duration_min)
         const timezone = business.timezone || 'America/Sao_Paulo'
 
         const { data: booked, error: bookedError } = await supabase.rpc('get_booked_slots', {
@@ -142,7 +144,7 @@ export function PublicBookingFormV2({ business, services, employees, workingHour
         slots = slots.filter((slot) => {
           const [hour, minute] = slot.split(':').map(Number)
           const start = hour * 60 + minute
-          const end = start + selectedService.duration_min
+          const end = start + service.duration_min
 
           return !(booked ?? []).some((appointment: { starts_at: string; ends_at: string }) => {
             const bookedStart = minutesInTimezone(appointment.starts_at, timezone)
@@ -171,7 +173,7 @@ export function PublicBookingFormV2({ business, services, employees, workingHour
       }
     }
 
-    loadSlots()
+    void loadSlots()
     return () => {
       cancelled = true
     }

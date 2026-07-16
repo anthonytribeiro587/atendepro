@@ -14,15 +14,15 @@ function tplConfirmClient(opts: {
   address?: string
 }): string {
   const lines = [
-    `✅ Agendamento confirmado!`,
-    ``,
+    '✅ Agendamento confirmado!',
+    '',
     `👤 ${opts.clientName}`,
     `📋 ${opts.serviceName}`,
     `🕐 ${opts.date} às ${opts.time}`,
     `🏠 ${opts.businessName}`,
   ]
   if (opts.address) lines.push(`📍 ${opts.address}`)
-  lines.push(``, `Enviaremos um lembrete antes do atendimento.`)
+  lines.push('', 'Enviaremos um lembrete antes do atendimento.')
   return lines.join('\n')
 }
 
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
 
     const { data: business, error: businessError } = await supabase
       .from('businesses')
-      .select('name, address, slug, timezone, telegram_bot_token, telegram_chat_id')
+      .select('name, address, slug, timezone, telegram_bot_token, telegram_chat_id, evolution_enabled, evolution_api_url, evolution_api_key, evolution_instance, meta_whatsapp_phone_number_id, meta_whatsapp_access_token')
       .eq('id', appointment.business_id)
       .single()
 
@@ -112,6 +112,22 @@ export async function POST(req: NextRequest) {
     }
 
     if (client?.phone) {
+      const credentials = business.evolution_enabled &&
+        business.evolution_api_url &&
+        business.evolution_api_key &&
+        business.evolution_instance
+        ? {
+            evolutionApiUrl: business.evolution_api_url,
+            evolutionApiKey: business.evolution_api_key,
+            evolutionInstance: business.evolution_instance,
+          }
+        : business.meta_whatsapp_phone_number_id && business.meta_whatsapp_access_token
+          ? {
+              phoneNumberId: business.meta_whatsapp_phone_number_id,
+              accessToken: business.meta_whatsapp_access_token,
+            }
+          : undefined
+
       results.whatsapp = await sendWhatsAppMessage(
         client.phone,
         waTplBookingConfirmation({
@@ -122,7 +138,8 @@ export async function POST(req: NextRequest) {
           businessName: business.name,
           employeeName: employee?.name,
           address: business.address ?? undefined,
-        })
+        }),
+        credentials
       )
     }
 
