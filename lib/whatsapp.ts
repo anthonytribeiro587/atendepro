@@ -1,24 +1,68 @@
 /**
- * lib/whatsapp.ts
- * Meta WhatsApp Cloud API — отправка сообщений клиентам.
+ * WhatsApp provider abstraction.
  *
- * Requires env vars:
- *   META_WHATSAPP_PHONE_NUMBER_ID  — ID номера отправителя в Meta Dashboard
- *   META_WHATSAPP_ACCESS_TOKEN     — постоянный или временный токен доступа
+ * Supported providers:
+ * - Evolution API: WHATSAPP_PROVIDER=evolution
+ * - Meta Cloud API: WHATSAPP_PROVIDER=meta
+ *
+ * When WHATSAPP_PROVIDER is omitted, Evolution is preferred when all
+ * EVOLUTION_* variables are present; otherwise Meta is used.
  */
 
-const BASE = 'https://graph.facebook.com/v20.0'
+const META_BASE = 'https://graph.facebook.com/v20.0'
 
-// ─── Нормализация номера ──────────────────────────────────────────────────────
-// WhatsApp требует E.164 без '+': "79001234567", "12025551234" и т.д.
+export function normalizeWhatsAppNumber(phone: string): string {
+  let digits = phone.replace(/\D/g, '')
 
-function normalizePhone(phone: string): string {
-  return phone.replace(/^\+/, '').replace(/[\s\-().]/g, '')
+  // Remove Brazilian carrier prefix when a number was pasted as 0XX...
+  if (digits.startsWith('0') && digits.length >= 12) digits = digits.slice(1)
+
+  // Brazilian local number with DDD: add country code for WhatsApp/E.164.
+  if (digits.length === 10 || digits.length === 11) digits = `55${digits}`
+
+  return digits
 }
 
-// ─── Отправить текстовое сообщение ────────────────────────────────────────────
+export function isEvolutionConfigured(): boolean {
+  return Boolean(
+    process.env.EVOLUTION_API_URL &&
+    process.env.EVOLUTION_API_KEY &&
+    (process.env.EVOLUTION_INSTANCE || process.env.EVOLUTION_INSTANCE_NAME)
+  )
+}
 
-export async function sendWhatsAppMessage(
+async function sendWithEvolution(to: string, message: string): Promise<boolean> {
+  const baseUrl = process.env.EVOLUTION_API_URL?.replace(/\/+$/, '')
+  const apiKey = process.env.EVOLUTION_API_KEY
+  const instance = process.env.EVOLUTION_INSTANCE || process.env.EVOLUTION_INSTANCE_NAME
+
+  if (!baseUrl || !apiKey || !instance) return false
+
+  try {
+    const res = await fetch(`${baseUrl}/message/sendText/${encodeURIComponent(instance)}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: apiKey,
+      },
+      body: JSON.stringify({ number: to, text: message }),
+      cache: 'no-store',
+    })
+
+    const responseText = await res.text().catch(() => '')
+    if (!res.ok) {
+      console.error('[whatsapp:evolution] send error:', res.status, responseText)
+      return false
+    }
+
+    return true
+  } catch (err) {
+    console.error('[whatsapp:evolution] exception:', err)
+    return false
+  }
+}
+
+async function sendWithMeta(
   to: string,
   message: string,
   credentials?: { phoneNumberId: string; accessToken: string }
@@ -28,11 +72,8 @@ export async function sendWhatsAppMessage(
 
   if (!phoneNumberId || !accessToken) return false
 
-  const normalizedTo = normalizePhone(to)
-  if (!normalizedTo) return false
-
   try {
-    const res = await fetch(`${BASE}/${phoneNumberId}/messages`, {
+    const res = await fetch(`${META_BASE}/${phoneNumberId}/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -40,24 +81,45 @@ export async function sendWhatsAppMessage(
       },
       body: JSON.stringify({
         messaging_product: 'whatsapp',
-        to: normalizedTo,
+        to,
         type: 'text',
         text: { body: message },
       }),
+      cache: 'no-store',
     })
-    const json = await res.json()
+
+    const json = await res.json().catch(() => null)
     if (!res.ok) {
-      console.error('[whatsapp] sendMessage error:', json?.error?.message ?? json)
+      console.error('[whatsapp:meta] send error:', json?.error?.message ?? json)
       return false
     }
+
     return true
   } catch (err) {
-    console.error('[whatsapp] sendMessage exception:', err)
+    console.error('[whatsapp:meta] exception:', err)
     return false
   }
 }
 
-// ─── Шаблоны сообщений (plain text, без HTML) ────────────────────────────────
+export async function sendWhatsAppMessage(
+  to: string,
+  message: string,
+  credentials?: { phoneNumberId: string; accessToken: string }
+): Promise<boolean> {
+  const normalizedTo = normalizeWhatsAppNumber(to)
+  if (!normalizedTo || !message.trim()) return false
+
+  const configuredProvider = process.env.WHATSAPP_PROVIDER?.trim().toLowerCase()
+  const shouldUseEvolution =
+    configuredProvider === 'evolution' ||
+    (!credentials && configuredProvider !== 'meta' && isEvolutionConfigured())
+
+  if (shouldUseEvolution) {
+    return sendWithEvolution(normalizedTo, message)
+  }
+
+  return sendWithMeta(normalizedTo, message, credentials)
+}
 
 export function tplBookingConfirmation(opts: {
   clientName: string
@@ -69,17 +131,17 @@ export function tplBookingConfirmation(opts: {
   address?: string
 }): string {
   const lines = [
-    `✅ Booking confirmed!`,
+    `✅ Agendamento confirmado!`,
     ``,
-    `Hi ${opts.clientName},`,
-    `Your appointment has been booked:`,
+    `Olá, ${opts.clientName}!`,
+    `Seu horário foi reservado com sucesso:`,
     ``,
-    `Service: ${opts.serviceName}`,
-    `Date: ${opts.date} at ${opts.time}`,
+    `Serviço: ${opts.serviceName}`,
+    `Data: ${opts.date} às ${opts.time}`,
   ]
-  if (opts.employeeName) lines.push(`Specialist: ${opts.employeeName}`)
-  if (opts.address) lines.push(`Address: ${opts.address}`)
-  lines.push(``, `See you soon — ${opts.businessName}`)
+  if (opts.employeeName) lines.push(`Profissional: ${opts.employeeName}`)
+  if (opts.address) lines.push(`Endereço: ${opts.address}`)
+  lines.push(``, `Até breve — ${opts.businessName}`)
   return lines.join('\n')
 }
 
@@ -91,17 +153,17 @@ export function tplReminder(opts: {
   businessName: string
   isOneHour?: boolean
 }): string {
-  const when = opts.isOneHour ? 'in 1 hour ⏰' : 'tomorrow 📅'
+  const when = opts.isOneHour ? 'em aproximadamente 1 hora ⏰' : 'amanhã 📅'
   return [
-    `🔔 Appointment reminder`,
+    `🔔 Lembrete de agendamento`,
     ``,
-    `Hi ${opts.clientName},`,
-    `Your appointment is ${when}:`,
+    `Olá, ${opts.clientName}!`,
+    `Seu atendimento é ${when}:`,
     ``,
-    `Service: ${opts.serviceName}`,
-    `Date: ${opts.date} at ${opts.time}`,
+    `Serviço: ${opts.serviceName}`,
+    `Data: ${opts.date} às ${opts.time}`,
     ``,
-    `See you soon — ${opts.businessName}`,
+    `Até breve — ${opts.businessName}`,
   ].join('\n')
 }
 
@@ -112,15 +174,15 @@ export function tplThankYou(opts: {
   bookingUrl?: string
 }): string {
   const lines = [
-    `✅ Thank you for your visit!`,
+    `✅ Obrigado pela visita!`,
     ``,
-    `Hi ${opts.clientName},`,
-    `It was a pleasure seeing you for ${opts.serviceName}.`,
+    `Olá, ${opts.clientName}!`,
+    `Foi um prazer atender você em ${opts.serviceName}.`,
     ``,
-    `We look forward to your next visit!`,
+    `Esperamos ver você novamente!`,
   ]
   if (opts.bookingUrl) {
-    lines.push(``, `Book your next appointment:`, opts.bookingUrl)
+    lines.push(``, `Agende seu próximo horário:`, opts.bookingUrl)
   }
   lines.push(``, `— ${opts.businessName}`)
   return lines.join('\n')
@@ -132,13 +194,13 @@ export function tplReactivation(opts: {
   bookingUrl?: string
 }): string {
   const lines = [
-    `👋 We miss you, ${opts.clientName}!`,
+    `👋 Sentimos sua falta, ${opts.clientName}!`,
     ``,
-    `It's been a while since your last visit at ${opts.businessName}.`,
-    `We'd love to see you again!`,
+    `Já faz algum tempo desde sua última visita ao ${opts.businessName}.`,
+    `Será um prazer receber você novamente!`,
   ]
   if (opts.bookingUrl) {
-    lines.push(``, `Book your appointment:`, opts.bookingUrl)
+    lines.push(``, `Agende seu horário:`, opts.bookingUrl)
   }
   return lines.join('\n')
 }
@@ -149,13 +211,12 @@ export function tplBirthday(opts: {
   bookingUrl?: string
 }): string {
   const lines = [
-    `🎂 Happy Birthday, ${opts.clientName}!`,
+    `🎂 Feliz aniversário, ${opts.clientName}!`,
     ``,
-    `Wishing you a wonderful day from all of us at ${opts.businessName}.`,
-    `Treat yourself — you deserve it!`,
+    `Toda a equipe do ${opts.businessName} deseja um dia maravilhoso para você.`,
   ]
   if (opts.bookingUrl) {
-    lines.push(``, `Book a special treat:`, opts.bookingUrl)
+    lines.push(``, `Agende um momento especial:`, opts.bookingUrl)
   }
   return lines.join('\n')
 }
@@ -167,11 +228,11 @@ export function tplLowStock(opts: {
   threshold: number
 }): string {
   return [
-    `⚠️ Low stock alert`,
+    `⚠️ Alerta de estoque baixo`,
     ``,
     `📦 ${opts.itemName}`,
-    `Current: ${opts.quantity} ${opts.unit} (threshold: ${opts.threshold})`,
+    `Atual: ${opts.quantity} ${opts.unit} (mínimo: ${opts.threshold})`,
     ``,
-    `Please restock soon.`,
+    `Providencie a reposição em breve.`,
   ].join('\n')
 }
