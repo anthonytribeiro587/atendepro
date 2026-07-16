@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - '.github/workflows/gerar-banco-completo.yml'
+      - 'supabase/migrations/*.sql'
 
 permissions:
   contents: write
@@ -134,5 +135,5 @@ jobs:
             exit 0
           fi
 
-          git commit -m "feat: adicionar SQL completo do Supabase"
+          git commit -m "feat: atualizar SQL completo do Supabase"
           git push
