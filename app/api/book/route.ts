@@ -120,21 +120,19 @@ export async function POST(req: NextRequest) {
     const service = serviceResult.data
     const business = businessResult.data
 
-    // Use only columns guaranteed by the initial schema. WhatsApp delivery uses
-    // the existing `phone` field, so no optional migration is required here.
+    // Only columns guaranteed by the initial AtendePRO schema are used here.
     let existing: {
       id: string
       name: string
       email: string | null
       phone: string | null
       telegram_id: string | null
-      viber_id: string | null
     } | null = null
 
     if (rawPhone) {
       const phoneLookup = await supabase
         .from('clients')
-        .select('id, name, email, phone, telegram_id, viber_id')
+        .select('id, name, email, phone, telegram_id')
         .eq('business_id', businessId)
         .eq('phone', rawPhone)
         .maybeSingle()
@@ -149,7 +147,7 @@ export async function POST(req: NextRequest) {
     if (!existing && email) {
       const emailLookup = await supabase
         .from('clients')
-        .select('id, name, email, phone, telegram_id, viber_id')
+        .select('id, name, email, phone, telegram_id')
         .eq('business_id', businessId)
         .ilike('email', email)
         .limit(1)
@@ -164,12 +162,10 @@ export async function POST(req: NextRequest) {
 
     let clientId: string
     let hasTelegram = false
-    let hasViber = false
 
     if (existing) {
       clientId = existing.id
       hasTelegram = Boolean(existing.telegram_id)
-      hasViber = Boolean(existing.viber_id)
 
       const { error: clientUpdateError } = await supabase
         .from('clients')
@@ -263,7 +259,7 @@ export async function POST(req: NextRequest) {
       appointmentId: appointment.id,
       clientId,
       hasTelegram,
-      hasViber,
+      hasViber: false,
     })
   } catch (error) {
     console.error('[api/book] unhandled:', error)
