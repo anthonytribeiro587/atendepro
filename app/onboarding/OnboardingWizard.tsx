@@ -5,6 +5,7 @@ import { completeOnboarding } from './actions'
 import { CheckCircle2, ChevronRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
+import { useRouter } from 'next/navigation'
 
 type Tab = 0 | 1 | 2
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid'
@@ -36,6 +37,7 @@ interface Props {
 
 export function OnboardingWizard({ initialSlug, initialName, isSaas, rootDomain }: Props) {
   const t = useTranslations('onboarding')
+  const router = useRouter()
   const [step, setStep] = useState<Tab>(0)
   const [bizName, setBizName] = useState(initialName)
   const [bizType, setBizType] = useState('')
@@ -129,7 +131,7 @@ export function OnboardingWizard({ initialSlug, initialName, isSaas, rootDomain 
     setSaving(true)
     setError('')
     try {
-      await completeOnboarding({
+      const result = await completeOnboarding({
         bizType,
         bizName: bizName.trim() || undefined,
         serviceName: service.name,
@@ -137,8 +139,17 @@ export function OnboardingWizard({ initialSlug, initialName, isSaas, rootDomain 
         serviceDuration: showDuration ? (Number(service.duration_min) || 60) : 0,
         ...(isSaas ? { slug } : {}),
       })
-    } catch {
-      setError(t('step2.error'))
+
+      if (result.redirectTo.startsWith('http')) {
+        window.location.assign(result.redirectTo)
+        return
+      }
+
+      router.push(result.redirectTo)
+      router.refresh()
+    } catch (err) {
+      console.error('Erro ao concluir onboarding:', err)
+      setError(err instanceof Error ? err.message : t('step2.error'))
       setSaving(false)
     }
   }
