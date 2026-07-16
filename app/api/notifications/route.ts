@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -23,7 +24,11 @@ export async function GET() {
   const { supabase, businessId } = await getBusinessId()
   if (!businessId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-  const { data, error } = await supabase
+  // business_notifications was added after the generated Supabase database
+  // types. Keep this route runtime-typed until those generated types are updated.
+  const notificationsClient = supabase as unknown as SupabaseClient
+
+  const { data, error } = await notificationsClient
     .from('business_notifications')
     .select('id, type, title, body, href, read_at, created_at')
     .eq('business_id', businessId)
@@ -54,7 +59,9 @@ export async function PATCH(request: NextRequest) {
   if (!businessId) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   const body = await request.json().catch(() => ({})) as { id?: string; all?: boolean }
-  let query = supabase
+  const notificationsClient = supabase as unknown as SupabaseClient
+
+  let query = notificationsClient
     .from('business_notifications')
     .update({ read_at: new Date().toISOString() })
     .eq('business_id', businessId)
