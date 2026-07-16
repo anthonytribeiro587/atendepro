@@ -71,6 +71,22 @@ type BusinessConfig = {
   evolution_template_birthday: string | null
 }
 
+/**
+ * O Supabase pode tipar relacionamentos aninhados como objeto ou array,
+ * dependendo da relação inferida. Normalizamos os dois formatos aqui.
+ */
+function firstRelation<T>(value: unknown): T | null {
+  if (Array.isArray(value)) {
+    return (value[0] as T | undefined) ?? null
+  }
+
+  if (value && typeof value === 'object') {
+    return value as T
+  }
+
+  return null
+}
+
 function getCredentials(business: BusinessConfig): WhatsAppCredentials {
   if (business.evolution_enabled) {
     return {
@@ -145,7 +161,7 @@ export async function GET(req: NextRequest) {
     },
     isOneHour: boolean
   ) {
-    const client = appointment.clients as ClientContact | null
+    const client = firstRelation<ClientContact>(appointment.clients)
     if (!client || (!client.phone && !client.email && !client.telegram_id)) return
 
     const type = isOneHour ? 'reminder_1h' : 'reminder_24h'
@@ -154,8 +170,8 @@ export async function GET(req: NextRequest) {
     const business = await getBusiness(appointment.business_id)
     if (!business) return
 
-    const service = appointment.services as { name: string } | null
-    const employee = appointment.employees as { name: string } | null
+    const service = firstRelation<{ name: string }>(appointment.services)
+    const employee = firstRelation<{ name: string }>(appointment.employees)
     const timezone = business.timezone || 'America/Sao_Paulo'
     const date = formatEmailDate(appointment.starts_at, timezone)
     const time = formatEmailTime(appointment.starts_at, timezone)
@@ -263,13 +279,13 @@ export async function GET(req: NextRequest) {
   debug.thankyou = { count: completed?.length ?? 0, error: completedError?.message ?? null }
 
   for (const appointment of completed ?? []) {
-    const client = appointment.clients as ClientContact | null
+    const client = firstRelation<ClientContact>(appointment.clients)
     if (!client || (!client.phone && !client.email && !client.telegram_id)) continue
     if (!await logged(appointment.business_id, appointment.id, 'thankyou')) continue
 
     const business = await getBusiness(appointment.business_id)
     if (!business) continue
-    const service = appointment.services as { name: string } | null
+    const service = firstRelation<{ name: string }>(appointment.services)
     const bookingUrl = business.slug ? `${APP_URL}/book/${business.slug}` : undefined
 
     if (business.telegram_bot_token && client.telegram_id) {
@@ -389,7 +405,7 @@ export async function GET(req: NextRequest) {
     .not('birthday', 'is', null)
 
   const birthdays = (birthdayClients ?? []).filter(
-    (client) => typeof client.birthday === 'string' && client.birthday.slice(5) === todayMonthDay
+    (client: { birthday: string | null }) => typeof client.birthday === 'string' && client.birthday.slice(5) === todayMonthDay
   )
   debug.birthday = { count: birthdays.length, error: birthdayError?.message ?? null }
 
