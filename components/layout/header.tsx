@@ -1,4 +1,4 @@
-import { Bell } from 'lucide-react'
+import { NotificationsBell } from '@/components/notifications-bell'
 
 interface HeaderProps {
   title: string
@@ -7,12 +7,10 @@ interface HeaderProps {
 
 export function Header({ title, actions }: HeaderProps) {
   return (
-    <header className="h-14 border-b border-gray-200 bg-white flex items-center px-6 gap-4 sticky top-0 z-10">
-      <h1 className="text-base font-semibold text-gray-900 flex-1">{title}</h1>
+    <header className="sticky top-0 z-20 flex h-14 items-center gap-4 border-b border-gray-200 bg-white px-4 sm:px-6">
+      <h1 className="flex-1 truncate text-base font-semibold text-gray-900">{title}</h1>
       {actions && <div className="flex items-center gap-2">{actions}</div>}
-      <button className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors">
-        <Bell className="w-4 h-4" />
-      </button>
+      <NotificationsBell />
     </header>
   )
 }

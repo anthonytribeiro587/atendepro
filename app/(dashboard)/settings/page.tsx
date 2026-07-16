@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { Header } from '@/components/layout/header'
 import { SettingsTabs } from './settings-tabs'
 import { EvolutionSettingsPortal } from '@/components/evolution-settings-portal'
+import { OwnerNotificationSettingsPortal } from '@/components/owner-notification-settings-portal'
 
 export default async function SettingsPage() {
   const supabase = createClient()
@@ -33,6 +34,12 @@ export default async function SettingsPage() {
     evolution_template_thankyou?: string | null
     evolution_template_reactivation?: string | null
     evolution_template_birthday?: string | null
+    owner_notification_phone?: string | null
+    notify_owner_new_booking?: boolean | null
+    notify_owner_daily_summary?: boolean | null
+    owner_daily_summary_time?: string | null
+    notify_owner_next_appointment?: boolean | null
+    owner_next_appointment_minutes?: number | null
   }
 
   const evolutionConfigured = Boolean(
@@ -90,6 +97,14 @@ export default async function SettingsPage() {
           reactivation: runtimeBusiness.evolution_template_reactivation ?? '',
           birthday: runtimeBusiness.evolution_template_birthday ?? '',
         }}
+      />
+      <OwnerNotificationSettingsPortal
+        initialPhone={runtimeBusiness.owner_notification_phone ?? ''}
+        initialNotifyNewBooking={runtimeBusiness.notify_owner_new_booking !== false}
+        initialNotifyDailySummary={runtimeBusiness.notify_owner_daily_summary !== false}
+        initialDailySummaryTime={(runtimeBusiness.owner_daily_summary_time ?? '20:00').slice(0, 5)}
+        initialNotifyNextAppointment={Boolean(runtimeBusiness.notify_owner_next_appointment)}
+        initialNextAppointmentMinutes={runtimeBusiness.owner_next_appointment_minutes ?? 30}
       />
     </>
   )

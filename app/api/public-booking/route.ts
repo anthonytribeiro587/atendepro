@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { notifyNewOnlineBooking } from '@/lib/business-alerts'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -242,24 +243,48 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Notifications are secondary: a failure here never invalidates the booking.
-    try {
-      const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 7000)
-      await fetch(`${request.nextUrl.origin}/api/email/confirm`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.INTERNAL_API_SECRET || ''}`,
-        },
-        body: JSON.stringify({ appointmentId: appointmentResult.data.id, formEmail: email }),
-        cache: 'no-store',
-        signal: controller.signal,
-      })
-      clearTimeout(timeout)
-    } catch (notificationError) {
-      console.error('[public-booking] notification failed:', notificationError)
+    let employeeName: string | null = null
+    if (employeeId) {
+      const { data: employee } = await supabase
+        .from('employees')
+        .select('name')
+        .eq('id', employeeId)
+        .eq('business_id', businessId)
+        .maybeSingle()
+      employeeName = employee?.name ?? null
     }
+
+    // Notificações são secundárias: uma falha nunca invalida o agendamento.
+    await Promise.allSettled([
+      (async () => {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 7000)
+        try {
+          await fetch(`${request.nextUrl.origin}/api/email/confirm`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${process.env.INTERNAL_API_SECRET || ''}`,
+            },
+            body: JSON.stringify({ appointmentId: appointmentResult.data.id, formEmail: email }),
+            cache: 'no-store',
+            signal: controller.signal,
+          })
+        } finally {
+          clearTimeout(timeout)
+        }
+      })(),
+      notifyNewOnlineBooking({
+        supabase,
+        businessId,
+        appointmentId: appointmentResult.data.id,
+        clientName: name,
+        clientPhone: rawPhone || null,
+        serviceName: serviceResult.data.name,
+        startsAt: startsAt.toISOString(),
+        employeeName,
+      }),
+    ])
 
     return NextResponse.json({
       ok: true,
