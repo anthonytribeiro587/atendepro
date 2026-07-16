@@ -42,7 +42,9 @@ jobs:
             exit 1
           fi
 
-          rsync -a "$PASTA_FONTE"/ ./
+          # Workflows não podem ser criados ou substituídos pelo próprio
+          # GITHUB_TOKEN durante a execução. Eles serão adicionados depois.
+          rsync -a --exclude='.github/workflows/' "$PASTA_FONTE"/ ./
           rm -rf .atendepro-import "${{ steps.localizar.outputs.arquivo }}"
 
       - name: Salvar arquivos no GitHub
