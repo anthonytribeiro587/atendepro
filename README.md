@@ -106,6 +106,7 @@ As migrations estão em `supabase/migrations`. Antes de produção:
 
 O código permanece sob licença MIT. O arquivo `LICENSE` precisa acompanhar cópias ou distribuições substanciais do software. A interface, documentação e identidade visual desta versão foram adaptadas para o AtendePRO.
 
+
 ## Segurança antes do lançamento
 
 - Execute `npm audit` em um ambiente com acesso ao registro npm.

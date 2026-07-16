@@ -1,0 +1,1277 @@
+{
+  "meta": {
+    "title": "AtendePRO — Business Management for Service SMBs",
+    "description": "Self-hosted POS, CRM, Inventory & Omnichannel Notifications. Your data, your server. Zero commission. One command install."
+  },
+  "brand": {
+    "name": "AtendePRO",
+    "tagline": "Business management · Zero commission"
+  },
+  "nav": {
+    "pricing": "Pricing",
+    "github": "GitHub",
+    "signIn": "Sign in",
+    "startFree": "Start free"
+  },
+  "landing": {
+    "badge": "Open source · MIT License · Docker in one command",
+    "headline": "Business management for service businesses",
+    "subheadline": "POS · CRM · Inventory · Booking · Omnichannel Notifications.",
+    "pitch": "Your data, your server. Zero commission.",
+    "ctaPrimary": "Get started free",
+    "ctaGithub": "View on GitHub",
+    "featuresHeading": "Everything you need, nothing you don't",
+    "features": {
+      "pos": "POS / Checkout — 3 clicks to complete a sale",
+      "crm": "CRM — full client history in 1 second",
+      "inventory": "Inventory with low-stock alerts",
+      "booking": "Calendar + online booking without registration",
+      "notifications": "Telegram & Viber notifications (free)",
+      "hosting": "Multi-tenant SaaS or self-hosted via Docker"
+    },
+    "pricingHeading": "Simple, transparent pricing",
+    "pricingSubheading": "Or self-host for free —",
+    "pricingSubheadingLink": "clone on GitHub",
+    "mostPopular": "Most popular",
+    "footer": "AtendePRO © 2026 · MIT License",
+    "plans": {
+      "free": {
+        "name": "Free",
+        "price": "$0",
+        "limit": "1 employee · 100 clients",
+        "cta": "Get started"
+      },
+      "starter": {
+        "name": "Starter",
+        "price": "$19/mo",
+        "limit": "3 employees · 1 000 clients",
+        "cta": "Get started"
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "$39/mo",
+        "limit": "15 employees · unlimited",
+        "cta": "Get started"
+      },
+      "agency": {
+        "name": "Agency",
+        "price": "$79/mo",
+        "limit": "Multi-location · white-label",
+        "cta": "Contact us"
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "heading": "Sign in to your account",
+      "googleButton": "Continue with Google",
+      "divider": "or",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "••••••••",
+      "submitButton": "Sign in",
+      "noAccount": "No account?",
+      "createAccount": "Create one free",
+      "forgotPassword": "Forgot password?",
+      "errorInvalid": "Invalid email or password",
+      "errorGoogle": "Google sign-in failed"
+    },
+    "register": {
+      "heading": "Create your account",
+      "subheading": "Free plan forever · No credit card required",
+      "businessNameLabel": "Business name",
+      "businessNamePlaceholder": "Maya's Salon",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Min. 8 characters",
+      "submitButton": "Create free account",
+      "alreadyHaveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "errorNoName": "Business name is required",
+      "errorCreateBusiness": "Could not create business. Try again."
+    },
+    "checkEmail": {
+      "heading": "Check your email",
+      "body": "We sent you a confirmation link. Click it and you'll be taken straight to your account.",
+      "noEmail": "Didn't receive it?",
+      "registerAgain": "Register again"
+    },
+    "forgotPassword": {
+      "heading": "Reset your password",
+      "subheading": "Enter your email and we'll send you a reset link.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "submitButton": "Send reset link",
+      "sending": "Sending...",
+      "forgotLink": "Forgot password?",
+      "sentHeading": "Check your email",
+      "sentBody": "We sent a password reset link to {email}. Click it to set a new password.",
+      "noEmail": "No email? Check your spam folder or",
+      "tryAgain": "try again",
+      "backToLogin": "← Back to sign in"
+    },
+    "resetPassword": {
+      "heading": "Set new password",
+      "newPasswordLabel": "New password",
+      "newPasswordPlaceholder": "Min. 8 characters",
+      "confirmLabel": "Confirm password",
+      "confirmPlaceholder": "Repeat new password",
+      "submitButton": "Update password"
+    }
+  },
+  "onboarding": {
+    "logo": "AtendePRO",
+    "intro": "Let's set up your business in 3 steps",
+    "steps": {
+      "businessType": "Business type",
+      "firstService": "First service",
+      "notifications": "Notifications"
+    },
+    "businessTypes": {
+      "salon": "💇 Beauty / Salon",
+      "barbershop": "✂️ Barbershop",
+      "auto_repair": "🔧 Auto repair",
+      "cafe": "☕ Cafe / Restaurant",
+      "dental": "🦷 Dental clinic",
+      "fitness": "💪 Fitness / Gym",
+      "massage": "💆 Massage / Spa",
+      "shop": "🏪 Shop / Kiosk",
+      "other": "🏢 Other"
+    },
+    "step0": {
+      "heading": "Tell us about your business",
+      "subheading": "We'll tailor the setup for you",
+      "bizNameLabel": "Business name *",
+      "bizNamePlaceholder": "Maya's Salon",
+      "businessTypeLabel": "Type of business",
+      "continue": "Continue",
+      "slugLabel": "Your AtendePRO URL",
+      "slugHint": "Lowercase letters, numbers, and hyphens · 3–30 characters",
+      "slugChecking": "Checking…",
+      "slugAvailable": "Available ✓",
+      "slugTaken": "Already taken — try a different one",
+      "slugInvalid": "Use only a–z, 0–9, and hyphens (3–30 chars)",
+      "slugPreview": "Your booking page:"
+    },
+    "step1": {
+      "heading": "Add your first service",
+      "subheading": "You can add more later in Settings",
+      "serviceNameLabel": "Service name *",
+      "serviceNamePlaceholder": "e.g. Haircut, Oil change…",
+      "priceLabel": "Price *",
+      "durationLabel": "Duration (min)",
+      "back": "Back",
+      "skip": "Skip",
+      "continue": "Continue"
+    },
+    "checklist": {
+      "title": "Get started with AtendePRO",
+      "progress": "{done} of {total} complete",
+      "step1": "Business profile created",
+      "step2": "Add your first service",
+      "step3": "Add your first client",
+      "step4": "Create your first booking",
+      "stepModules": "Choose your modules",
+      "step5": "Connect notifications",
+      "step5sub": "Send automatic reminders to clients",
+      "connect": "Connect",
+      "configure": "Configure",
+      "addService": "Add service",
+      "addClient": "Add client",
+      "openCalendar": "Open calendar",
+      "stepProduct": "Add your first product",
+      "addProduct": "Add product",
+      "allDone": "You're all set! 🎉",
+      "upgradeTitle": "You're all set — ready to upgrade?",
+      "upgradeSubtitle": "You started with the {plan} plan. Here's what you unlock:",
+      "upgradeCtaButton": "Continue to payment →",
+      "upgradeLaterButton": "Maybe later, stay on Free"
+    },
+    "step2": {
+      "heading": "Set up notifications",
+      "subheading": "Email is ready out of the box. Optionally connect Telegram, Viber, or WhatsApp later in Settings → Notifications.",
+      "emailChannel": "Email (Resend / SMTP)",
+      "emailChannelSub": "Booking confirmations & reminders",
+      "emailChannelStatus": "Auto-enabled",
+      "messengerChannel": "Telegram · Viber · WhatsApp",
+      "messengerChannelSub": "Add tokens later in Settings → Notifications",
+      "messengerChannelStatus": "Optional",
+      "back": "Back",
+      "settingUp": "Setting up…",
+      "submit": "Go to dashboard →",
+      "error": "Something went wrong. Please try again."
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "stats": {
+      "revenueToday": "Revenue today",
+      "appointmentsToday": "Bookings today",
+      "totalClients": "Total clients",
+      "lowStock": "Low stock items",
+      "lowStockOk": "All good ✓",
+      "transactionsToday": "Sales today",
+      "unitsSold": "units sold",
+      "totalProducts": "Total products"
+    },
+    "lowStockList": {
+      "heading": "Low stock",
+      "viewAll": "View all →",
+      "allGood": "All items are well stocked ✓",
+      "threshold": "threshold",
+      "badge": "Low stock"
+    },
+    "upcomingAppointments": {
+      "heading": "Upcoming bookings",
+      "viewAll": "View all",
+      "empty": "No upcoming appointments.",
+      "addOne": "Add one",
+      "walkIn": "Walk-in"
+    },
+    "recentSales": {
+      "heading": "Recent sales",
+      "viewAll": "Transactions →",
+      "empty": "No sales yet.",
+      "makeFirst": "Make first sale",
+      "walkIn": "Walk-in",
+      "pmCash": "Cash",
+      "pmCard": "Card",
+      "pmTransfer": "Transfer",
+      "pmOnline": "Online"
+    },
+    "appointmentStatus": {
+      "pending": "pending",
+      "confirmed": "confirmed",
+      "completed": "completed",
+      "paid": "paid",
+      "cancelled": "cancelled",
+      "no_show": "no show"
+    }
+  },
+  "pos": {
+    "title": "POS / Checkout",
+    "salesHistory": "Transactions",
+    "categoryOther": "Other",
+    "loyaltyBanner": "Use {pts} pts → {amount} off",
+    "loyaltyNeedPoints": "has {pts} pts (need {need} to redeem)",
+    "loyaltyDiscount": "Loyalty discount",
+    "cart": "Cart",
+    "clientLabel": "Client",
+    "walkIn": "Walk-in",
+    "employeeLabel": "Employee",
+    "anyEmployee": "Any",
+    "emptyCart": "Tap a service to add",
+    "emptyCartService": "Tap a service to add",
+    "emptyCartProduct": "Scan or tap a product to add",
+    "productsLabel": "Products",
+    "outOfStock": "Out of stock",
+    "itemsLeft": "{count} left",
+    "showingProducts": "Showing {shown} of {total} products — type to search more",
+    "scanToAdd": "Scan or enter barcode…",
+    "itemNotFound": "Item not found",
+    "discountLabel": "Discount",
+    "paymentMethods": {
+      "cash": "cash",
+      "card": "card",
+      "transfer": "transfer"
+    },
+    "totalLabel": "Total",
+    "processing": "Processing…",
+    "chargeButton": "Charge",
+    "servicesTab": "Services",
+    "noServices": "No services yet.",
+    "addServices": "Add services",
+    "bookingBanner": "Charging for booking:",
+    "success": {
+      "heading": "Sale complete!",
+      "receipt": "Receipt",
+      "newSale": "New sale"
+    },
+    "saveClientPrompt": "Save this customer to your client base?",
+    "saveClientNamePlaceholder": "Name *",
+    "saveClientPhonePlaceholder": "Phone",
+    "saveClientEmailPlaceholder": "Email",
+    "saveClientNotesPlaceholder": "Notes",
+    "saveClientSkip": "Skip",
+    "saveClientSave": "Save client",
+    "offlineMode": "Offline mode",
+    "offlineSyncAuto": "Sales will sync automatically when you reconnect.",
+    "offlinePendingCount": "{count} pending",
+    "offlineSyncing": "Syncing {count} offline sales…",
+    "offlinePendingSync": "{count} offline sales pending sync",
+    "offlineSyncNow": "Sync now",
+    "offlineSavedReceipt": "Saved offline. Will sync when internet is restored.",
+    "loyaltyRemoveDiscount": "-{amount} ✓ Remove",
+    "durationMin": "{min} min"
+  },
+  "crm": {
+    "title": "Clients",
+    "addClient": "Add client",
+    "searchPlaceholder": "Search by name, phone, email…",
+    "limitTitle": "You've reached the 100-client limit on the Free plan.",
+    "limitDesc": "Upgrade to Starter to add unlimited clients.",
+    "empty": {
+      "icon": "👥",
+      "heading": "No clients yet",
+      "action": "Add your first client"
+    },
+    "table": {
+      "name": "Name",
+      "contact": "Contact",
+      "tags": "Tags",
+      "lastService": "Last service",
+      "visits": "Visits",
+      "spent": "Spent",
+      "lastVisit": "Last visit",
+      "points": "Points"
+    }
+  },
+  "inventory": {
+    "title": "Inventory",
+    "addItem": "Add item",
+    "importCsv": "Import",
+    "export": "Export",
+    "import": {
+      "title": "Import Products",
+      "uploadHint": "Already have a supplier price list in Excel or CSV? Upload it directly — AtendePRO will detect the columns automatically.",
+      "dropzone": "Drop file here or click to browse",
+      "dropzoneFormats": ".xlsx  ·  .xls  ·  .csv",
+      "orSeparator": "or",
+      "templateHint": "Starting from scratch?",
+      "downloadTemplate": "Download Excel template",
+      "templateSubhint": "Fill it in and upload it back here.",
+      "productsFound": "{count} product{count, plural, one {} other {s}} found",
+      "importing": "Importing…",
+      "importN": "Import {count} product{count, plural, one {} other {s}}",
+      "result": "Import complete",
+      "imported": "{count} imported",
+      "skipped": "{count} skipped (duplicates or empty names)",
+      "limitReached": "Plan limit reached. Upgrade to import more products."
+    },
+    "searchPlaceholder": "Search by name, SKU or barcode...",
+    "itemsTotal": "{count} items total",
+    "showingOf": "Showing {filtered} of {total} items",
+    "showingLowStock": "Showing {count} low stock items",
+    "lowStockCount": "{count} low stock",
+    "noMatch": "No items match \"{query}\"",
+    "lowStockAlert": "{count} item below low-stock threshold",
+    "lowStockAlertPlural": "{count} items below low-stock threshold",
+    "empty": {
+      "icon": "📦",
+      "heading": "No items yet",
+      "action": "Add your first item"
+    },
+    "table": {
+      "name": "Name",
+      "category": "Category",
+      "stock": "Stock",
+      "cost": "Cost",
+      "sellPrice": "Sell price",
+      "status": "Status"
+    },
+    "status": {
+      "outOfStock": "Out of stock",
+      "lowStock": "Low stock",
+      "ok": "OK"
+    },
+    "units": {
+      "pcs": "pcs",
+      "g": "g",
+      "kg": "kg",
+      "ml": "ml",
+      "l": "l",
+      "bottle": "bottle",
+      "box": "box",
+      "pack": "pack",
+      "other": "other…",
+      "enterUnit": "Enter unit name"
+    },
+    "barcode": "Barcode",
+    "scanToAdd": "Scan barcode to add or update",
+    "scanWithCamera": "Scan with camera",
+    "cameraNotSupported": "Camera scanning not supported in this browser",
+    "itemNotFound": "Item not found",
+    "itemFound": "Item found",
+    "currentStock": "Current stock",
+    "addStockQty": "Quantity to add",
+    "addStock": "Add stock",
+    "createNewInstead": "Create new item",
+    "addNewItem": "Add as new item",
+    "photo": "Photo",
+    "uploadPhoto": "Upload photo",
+    "filterLowStockLabel": "Showing low stock items only",
+    "filterClear": "Clear filter",
+    "tabs": {
+      "items": "Items",
+      "sales": "Turnover"
+    },
+    "sales": {
+      "revenue": "Revenue",
+      "unitsSold": "Units sold",
+      "transactions": "Transactions",
+      "topItems": "Top items",
+      "recentSales": "Recent sales",
+      "noSales": "No sales in this period",
+      "colDate": "Date",
+      "colReceipt": "Receipt",
+      "colItems": "Items",
+      "colTotal": "Total",
+      "periods": {
+        "today": "Today",
+        "7d": "7 days",
+        "30d": "30 days"
+      },
+      "customRange": "Custom range",
+      "from": "From",
+      "to": "To",
+      "apply": "Apply",
+      "exportExcel": "Export to Excel"
+    }
+  },
+  "booking": {
+    "title": "Booking",
+    "newAppointment": "New booking",
+    "emptyState": {
+      "heading": "No appointments this week",
+      "sub": "Click a time slot on the calendar or use the button to add one"
+    },
+    "calendar": {
+      "today": "Today",
+      "publicPage": "Public booking page",
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "colorLegend": "Color legend",
+      "teamColors": "Team colors",
+      "noTeamMembers": "No team members yet",
+      "appointmentStatus": "Appointment status"
+    },
+    "status": {
+      "pending": "pending",
+      "confirmed": "confirmed",
+      "completed": "completed",
+      "paid": "paid",
+      "cancelled": "cancelled",
+      "no_show": "no show"
+    },
+    "walkIn": "Walk-in",
+    "form": {
+      "heading": "New booking",
+      "serviceLabel": "Service *",
+      "servicePlaceholder": "Select service…",
+      "datetimeLabel": "Date & time *",
+      "clientLabel": "Client",
+      "employeeLabel": "Employee",
+      "anyEmployee": "Any",
+      "notesLabel": "Notes",
+      "notesPlaceholder": "Optional note…",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "save": "Save",
+      "closedDayError": "This day is marked as closed in Working Hours. Update your schedule in Settings first."
+    },
+    "detail": {
+      "statusLabel": "Status",
+      "employeeLabel": "Employee:",
+      "chargeButton": "Charge",
+      "close": "Close",
+      "deleteButton": "Delete appointment",
+      "onlineLabel": "Online",
+      "deleteConfirm": "Delete this appointment?",
+      "deleteConfirmYes": "Delete",
+      "unassigned": "Unassigned"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "general": "General",
+      "services": "Services",
+      "employees": "Employees",
+      "notifications": "Notifications",
+      "billing": "Billing",
+      "account": "Account",
+      "domain": "Domain",
+      "loyalty": "Loyalty",
+      "modules": "Modules"
+    },
+    "billing": {
+      "heading": "Current plan",
+      "planSuffix": "plan",
+      "freePlan": "Free",
+      "activePlan": "Active",
+      "renewsOn": "Renews on",
+      "employees": "Employees",
+      "clients": "Clients",
+      "manageSubscription": "Manage subscription",
+      "mostPopular": "Most popular",
+      "upgrade": "Upgrade →",
+      "currentPlan": "Current plan",
+      "successMessage": "Subscription activated! Thank you for upgrading.",
+      "errorMessage": "Something went wrong. Please try again or contact support."
+    },
+    "account": {
+      "heading": "My account",
+      "currentEmailLabel": "Current email",
+      "newEmailLabel": "New email",
+      "newEmailPlaceholder": "Enter new email address",
+      "changeEmailButton": "Change email",
+      "emailHint": "A confirmation link will be sent to the new address. The change takes effect after you click it.",
+      "passwordHeading": "Change password",
+      "newPasswordLabel": "New password",
+      "confirmPasswordLabel": "Confirm new password",
+      "confirmPasswordPlaceholder": "Repeat new password",
+      "changePasswordButton": "Update password",
+      "saving": "Saving…",
+      "pwMinLength": "Password must be at least 8 characters",
+      "pwNoMatch": "Passwords do not match",
+      "pwSuccess": "Password updated successfully",
+      "emailInvalid": "Enter a valid email address",
+      "emailConfirmSent": "Confirmation sent to {email}. Click the link in the email to complete the change."
+    },
+    "workingHours": {
+      "heading": "Working Hours",
+      "dayNames": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
+      "from": "From",
+      "to": "To",
+      "closed": "Closed",
+      "saveButton": "Save hours",
+      "saving": "Saving…",
+      "saved": "Saved ✓"
+    },
+    "general": {
+      "heading": "Business info",
+      "fields": {
+        "name": "Business name",
+        "phone": "Phone",
+        "email": "Email",
+        "address": "Address",
+        "timezone": "Timezone",
+        "currency": "Currency (ISO)",
+        "slug": "URL slug"
+      },
+      "typeLabel": "Business type",
+      "typeDefault": "— select —",
+      "types": {
+        "salon": "💇 Beauty / Salon",
+        "barbershop": "✂️ Barbershop",
+        "auto_repair": "🔧 Auto repair",
+        "cafe": "☕ Cafe / Restaurant",
+        "dental": "🦷 Dental clinic",
+        "fitness": "💪 Fitness / Gym",
+        "massage": "💆 Massage / Spa",
+        "other": "🏢 Other"
+      },
+      "notificationLanguageLabel": "Notification language",
+      "notificationLanguageHint": "Language used in booking confirmations and reminders sent to clients.",
+      "bookingUrlLabel": "Public booking URL",
+      "slugHint": "Only lowercase letters, numbers and hyphens. Changing this will break existing booking links.",
+      "slugError": "Only lowercase letters, numbers, and hyphens allowed",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "saveButton": "Save changes",
+      "planLabel": "Plan:",
+      "brandColorLabel": "Brand color",
+      "brandColorHint": "Used on your public booking page — your clients will see this color.",
+      "logoLabel": "Business Logo",
+      "logoHint": "Upload your logo to replace the letter avatar on your booking page.",
+      "logoUploadArea": "Upload area",
+      "logoRemove": "Remove logo",
+      "logoRemoving": "Removing…",
+      "logoUpload": "Click to upload or drag & drop",
+      "logoUploading": "Uploading…",
+      "logoFormats": "PNG, JPG, WebP, SVG · max 2MB",
+      "logoProOnly": "Available on Pro plan →",
+      "logoErrorRemove": "Failed to remove logo.",
+      "logoErrorNetwork": "Network error: {message}"
+    },
+    "services": {
+      "empty": "No services yet",
+      "table": {
+        "name": "Name",
+        "category": "Category",
+        "price": "Price",
+        "duration": "Duration",
+        "capacity": "Capacity"
+      },
+      "addHeading": "Add service",
+      "editHeading": "Edit service",
+      "fields": {
+        "name": "Name",
+        "category": "Category",
+        "price": "Price",
+        "duration": "Duration (min)",
+        "capacity": "Capacity"
+      },
+      "capacityHint": "Max clients per slot (1 = individual, >1 = group class)",
+      "addButton": "Add service",
+      "updateButton": "Update",
+      "cancelButton": "Cancel",
+      "deleteConfirm": "Delete?",
+      "deleteYes": "Delete",
+      "deleteNo": "Cancel"
+    },
+    "employees": {
+      "empty": "No employees yet",
+      "table": {
+        "name": "Name",
+        "role": "Role",
+        "contact": "Email",
+        "phone": "Phone"
+      },
+      "addHeading": "Add employee",
+      "editHeading": "Edit employee",
+      "fields": {
+        "name": "Full name",
+        "role": "Role",
+        "email": "Email",
+        "phone": "Phone"
+      },
+      "addButton": "Add employee",
+      "updateButton": "Update",
+      "cancelButton": "Cancel",
+      "deleteConfirm": "Remove?",
+      "deleteYes": "Remove",
+      "deleteNo": "Cancel",
+      "limitBannerTitle": "Team member limit reached.",
+      "limitBannerDesc": "Upgrade to Starter to add up to 5 team members."
+    },
+    "notifications": {
+      "heading": "Notification channels",
+      "email": {
+        "label": "Email",
+        "connected": "Connected",
+        "notSet": "Not configured",
+        "smtpOption": "SMTP server",
+        "resendOption": "Resend API",
+        "smtpHost": "SMTP Host",
+        "smtpPort": "SMTP Port",
+        "smtpUser": "Username",
+        "smtpPass": "Password",
+        "smtpPassHint": "For Gmail: use an App Password — myaccount.google.com → Security → 2-Step Verification → App passwords",
+        "smtpFrom": "From address",
+        "smtpHostPlaceholder": "smtp.gmail.com",
+        "smtpFromPlaceholder": "hello@mybusiness.com",
+        "resendApiKey": "API Key",
+        "resendApiKeyPlaceholder": "re_...",
+        "resendSignup": "Get a free API key at resend.com"
+      },
+      "telegram": {
+        "label": "Telegram Bot",
+        "connected": "Connected",
+        "notSet": "Not configured",
+        "description": "Create a bot via @BotFather and paste the token below.",
+        "placeholder": "123456789:AAABBB...",
+        "connectButton": "Connect",
+        "step1": "Open <a href=\"https://t.me/BotFather\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-blue-600 hover:underline\">@BotFather</a> in Telegram → <code class=\"bg-gray-100 px-1 rounded\">/newbot</code> → copy the token",
+        "step2": "Paste the token below and click Connect",
+        "step3": "Open your new bot in Telegram from your business account and send <code class=\"bg-gray-100 px-1 rounded\">/start</code> — this registers the chat to receive notifications"
+      },
+      "viber": {
+        "label": "Viber Bot",
+        "connected": "Connected",
+        "notSet": "Not configured",
+        "description": "Create a bot at partners.viber.com and paste the auth token.",
+        "placeholder": "Viber auth token",
+        "connectButton": "Connect",
+        "step1": "Go to <a href=\"https://developers.viber.com\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-blue-600 hover:underline\">developers.viber.com</a> → create a bot → copy the token",
+        "step2": "Paste the token below and click Connect",
+        "step3": "Open your bot in Viber from your business account and send <code class=\"bg-gray-100 px-1 rounded\">/start</code> — this registers the chat to receive notifications"
+      },
+      "whatsapp": {
+        "label": "WhatsApp (Meta Cloud API)",
+        "connected": "Connected",
+        "notSet": "Not configured",
+        "description": "Sends messages directly to clients who have a WhatsApp number saved in CRM.",
+        "phoneNumberId": "Phone Number ID",
+        "phoneNumberIdPlaceholder": "1234567890",
+        "accessToken": "Access Token",
+        "accessTokenPlaceholder": "EAABs...",
+        "saveButton": "Save credentials",
+        "step1": "Go to <a href=\"https://developers.facebook.com\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-blue-600 hover:underline\">developers.facebook.com</a> → create a Meta App → add the <strong>WhatsApp</strong> product",
+        "step2": "In <strong>WhatsApp → API Setup</strong> copy the <em>Phone Number ID</em> and a <strong>permanent access token</strong> (create via System User in Meta Business Manager — recommended)",
+        "step3": "Paste both below and click {saveButton}",
+        "step4": "Add a client's WhatsApp number in CRM → client page — they will receive notifications automatically"
+      },
+      "ownerWhatsapp": {
+        "label": "Your WhatsApp number (for alerts)",
+        "description": "Enter your personal WhatsApp number to receive low-stock alerts and other owner notifications. Format: +79001234567",
+        "placeholder": "+79001234567"
+      },
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved ✓",
+      "triggersHeading": "Automated triggers",
+      "triggers": {
+        "confirmation": "Booking confirmation — instant",
+        "reminder24h": "Reminder — 24 hours before",
+        "reminder1h": "Reminder — 1 hour before",
+        "thankYou": "Thank-you — after visit",
+        "reactivation": "Re-activation — 30 days no visit",
+        "birthday": "Birthday greeting",
+        "lowStock": "Low-stock alert (email)"
+      },
+      "waTemplates": {
+        "heading": "WhatsApp Templates",
+        "description": "Enter the template names approved in your Meta Business Manager. Leave empty to skip WhatsApp for that event.",
+        "confirmation": "Confirmation template name",
+        "confirmationPlaceholder": "e.g. booking_confirmation",
+        "reminder": "Reminder template name",
+        "reminderPlaceholder": "e.g. appointment_reminder",
+        "thankyou": "Thank-you template name",
+        "thankyouPlaceholder": "e.g. visit_thankyou",
+        "reengagement": "Re-engagement template name",
+        "reengagementPlaceholder": "e.g. client_reactivation",
+        "birthday": "Birthday template name",
+        "birthdayPlaceholder": "e.g. happy_birthday",
+        "language": "Template language"
+      }
+    },
+    "domain": {
+      "heading": "Custom Domain",
+      "description": "Use your own domain for the booking page (e.g. booking.your-salon.com).",
+      "proOnly": "Available on Pro and Agency plans",
+      "proOnlyDesc": "Upgrade to connect your custom domain to your booking page.",
+      "upgradeButton": "Upgrade to Pro →",
+      "domainLabel": "Domain",
+      "domainPlaceholder": "booking.your-salon.com",
+      "connectButton": "Connect Domain",
+      "dnsAfterSave": "After saving, add this DNS record at your domain provider:",
+      "dnsNameHint": "booking (or whatever subdomain you want)",
+      "dnsAddRecord": "Add this DNS record at your domain provider:",
+      "dnsSslNote": "SSL certificate will be issued automatically. This may take up to 24 hours.",
+      "statusPending": "Pending verification",
+      "checkStatus": "Check status",
+      "removeButton": "Remove",
+      "statusActive": "Active",
+      "openBookingPage": "Open booking page →",
+      "removeDomain": "Remove domain",
+      "confirmRemove": "Remove {domain}?",
+      "confirmRemoveButton": "Confirm remove",
+      "cancelButton": "Cancel",
+      "statusFailed": "Verification failed",
+      "dnsError": "Please check your DNS settings and try again.",
+      "retryButton": "Retry",
+      "networkError": "Network error. Please try again.",
+      "connectError": "Error connecting domain"
+    },
+    "loyalty": {
+      "heading": "Loyalty Program",
+      "description": "Reward your clients with points for every visit. They can redeem points for discounts.",
+      "proOnly": "Available on Pro and Agency plans",
+      "proOnlyDesc": "Upgrade to enable the loyalty program for your clients.",
+      "upgradeButton": "Upgrade to Pro →",
+      "descriptionActive": "Reward clients with points for every purchase.",
+      "enableLabel": "Enable loyalty program",
+      "enableHint": "Clients earn points on every POS transaction",
+      "pointsPerDollar": "Points per $1 spent",
+      "minRedeem": "Minimum points to redeem",
+      "redeemValue": "Redemption value ($)",
+      "summary": "Clients earn {points} point(s) per $1. Every {min} points = ${value} discount.",
+      "saveButton": "Save settings",
+      "saved": "Saved!"
+    },
+    "modules": {
+      "heading": "Feature Modules",
+      "description": "Choose which features are active for your business. Data is never deleted when a module is turned off — it reappears when you re-enable it.",
+      "presetsLabel": "Quick presets",
+      "presets": {
+        "salon": "💇 Salon / Barbershop",
+        "shop": "🏪 Shop / Kiosk",
+        "cafe": "☕ Cafe",
+        "all": "✳️ All modules"
+      },
+      "confirmOff": "Data is never deleted — it will reappear when re-enabled. Turn off {label}?",
+      "cancelButton": "Cancel",
+      "turnOffButton": "Turn off",
+      "saveButton": "Save modules",
+      "saved": "Saved!",
+      "items": {
+        "bookings": {
+          "label": "Bookings & Calendar",
+          "description": "Appointments, schedule, staff assignments"
+        },
+        "crm": {
+          "label": "CRM & Clients",
+          "description": "Client cards, visit history, loyalty points"
+        },
+        "pos": {
+          "label": "POS & Checkout",
+          "description": "Sales, payments, receipts"
+        },
+        "inventory": {
+          "label": "Inventory",
+          "description": "Stock, products, low-stock alerts"
+        },
+        "notifications": {
+          "label": "Notifications",
+          "description": "Telegram, WhatsApp, Viber, Email reminders"
+        }
+      }
+    }
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "pos": "POS",
+    "clients": "Clients",
+    "inventory": "Inventory",
+    "booking": "Booking",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "signOut": "Sign out",
+    "shareFeedback": "Share feedback",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "publicBooking": {
+    "bookAnAppointment": "Book an appointment",
+    "stepSelectService": "Select service",
+    "stepChooseSpecialist": "Choose specialist",
+    "stepDatetime": "Date & time",
+    "stepYourDetails": "Your details",
+    "addToGoogleCalendar": "Add to Google Calendar",
+    "slotTaken": "⚠ This time was just booked by someone else. Please choose a different time.",
+    "demoNotificationsHeading": "Your clients receive instant notifications via:",
+    "demoNotificationsFooter": "Set up notifications in 5 minutes · No extra cost",
+    "selectService": {
+      "heading": "Select a service",
+      "empty": "No services available for online booking.",
+      "minutes": "{duration} min"
+    },
+    "selectEmployee": {
+      "heading": "Choose a specialist",
+      "sub": "You can pick anyone — they're all great",
+      "anyone": "No preference",
+      "back": "← Back"
+    },
+    "datetime": {
+      "heading": "Choose date & time",
+      "back": "← Back",
+      "dateLabel": "Date",
+      "timeLabel": "Time",
+      "continue": "Continue"
+    },
+    "contact": {
+      "heading": "Your contact info",
+      "back": "← Back",
+      "nameLabel": "Name *",
+      "namePlaceholder": "Your name",
+      "phoneLabel": "Phone",
+      "phonePlaceholder": "+1 234 567 8900",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "booking": "Confirming…",
+      "confirm": "Confirm booking — {price}",
+      "noRegistration": "No registration required"
+    },
+    "success": {
+      "heading": "Booking confirmed!",
+      "body": "Your appointment is confirmed. See you soon!",
+      "bookAnother": "Book another",
+      "optInHeading": "Get reminders in your messenger",
+      "optInSub": "Tap below to receive appointment reminders in Telegram or Viber — no registration needed.",
+      "telegramButton": "Get reminders in Telegram",
+      "viberButton": "Get reminders in Viber"
+    },
+    "loadingTimes": "Loading available times…",
+    "dayClosed": "This day is outside working hours. Please choose another date.",
+    "noSlots": "No available times for this day. Please choose another date.",
+    "spotsLeft": "{count} spots left",
+    "continueButton": "Continue →",
+    "at": "at",
+    "errorContactRequired": "Please enter at least a phone number or email so we can confirm your booking.",
+    "errorPhone": "Please enter a valid phone number (digits only, e.g. +1 234 567 8900).",
+    "errorEmail": "Please enter a valid email address (e.g. name@example.com).",
+    "errorRateLimit": "Too many booking attempts. Please wait a few minutes and try again.",
+    "errorGeneric": "Something went wrong. Please try again or contact the business directly."
+  },
+  "contact": {
+    "heading": "Contact us",
+    "subheading": "Real support, no bots — usually faster than you'd expect",
+    "namePlaceholder": "Your name",
+    "emailPlaceholder": "your@email.com",
+    "messagePlaceholder": "How can we help?",
+    "sendButton": "Send message",
+    "sending": "Sending...",
+    "success": "✓ Message sent! We'll get back to you soon.",
+    "error": "Something went wrong. Please try again."
+  },
+  "csvImport": {
+    "importCsvButton": "Import CSV",
+    "importClients": "Import Clients",
+    "upgradeToImport": "Upgrade to import more clients",
+    "title": "Import clients from CSV",
+    "selectPlatform": "Select where you're importing from to get export instructions:",
+    "howToExport": "How to export: ",
+    "dropZone": "Drop CSV file here or click to browse",
+    "dropZoneFormats": "Supports .csv files",
+    "rowsFound": "{count} row{count, plural, one {} other {s}} found",
+    "changeFile": "Change file",
+    "noPhoneWarn": "No phone column detected. Clients will be imported without phone numbers (no deduplication).",
+    "previewName": "Name",
+    "previewPhone": "Phone",
+    "previewEmail": "Email",
+    "moreRows": "…and {count} more row{count, plural, one {} other {s}}",
+    "back": "Back",
+    "importing": "Importing…",
+    "importButton": "Import {count} client{count, plural, one {} other {s}}",
+    "doneTitle": "Import complete",
+    "imported": "{count} client{count, plural, one {} other {s}} imported",
+    "skipped": "{count} skipped (duplicates or empty names)",
+    "done": "Done",
+    "platformHints": {
+      "fresha": "Clients → Options (top right) → Export → CSV",
+      "vagaro": "More → Reports → Customers → Action → Export Excel, then save as CSV",
+      "booksy": "Customers → More Options → Export → CSV",
+      "mindbody": "Reports → Clients → Mailing Lists → Export → CSV",
+      "square": "Customers → Customer Directory → Export",
+      "other": "Export your client list as CSV with columns: name, phone, email"
+    }
+  },
+  "datePicker": {
+    "today": "Today",
+    "months": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ],
+    "days": [
+      "Mo",
+      "Tu",
+      "We",
+      "Th",
+      "Fr",
+      "Sa",
+      "Su"
+    ]
+  },
+  "feedback": {
+    "heading": "Share your feedback",
+    "subheading": "Help us improve AtendePRO",
+    "placeholder": "What's on your mind?",
+    "placeholderGood": "What do you like most?",
+    "placeholderBad": "What's not working for you?",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "sending": "Sending…",
+    "thanks": "Thank you for your feedback!",
+    "thanksSub": "It helps us make AtendePRO better.",
+    "close": "Close"
+  },
+  "clientDetail": {
+    "backToClients": "← Clients",
+    "editButton": "Edit",
+    "saveButton": "Save",
+    "cancelButton": "Cancel",
+    "deleteButton": "Delete client",
+    "deleteConfirm": "Delete this client? This cannot be undone.",
+    "fields": {
+      "name": "Name",
+      "phone": "Phone",
+      "email": "Email",
+      "birthday": "Birthday",
+      "notes": "Notes",
+      "notesPlaceholder": "Add a note…",
+      "tags": "Tags",
+      "tagsPlaceholder": "tag1, tag2…",
+      "whatsappNumber": "WhatsApp",
+      "messengers": "Messengers",
+      "connected": "Connected ✓",
+      "notConnected": "Not connected",
+      "telegram": "Telegram",
+      "viber": "Viber",
+      "telegramShareTitle": "Share this link with the client to connect Telegram notifications",
+      "telegramConnectFirst": "Connect Telegram bot in Settings first",
+      "copiedLink": "✓ Copied",
+      "copyLink": "Copy link"
+    },
+    "phoneInvalid": "Please enter a valid phone number (digits only)",
+    "dateInvalid": "Please enter a valid date",
+    "stats": {
+      "totalVisits": "Total visits",
+      "totalSpent": "Total spent",
+      "lastVisit": "Last visit",
+      "never": "Never",
+      "clientSince": "Client since"
+    },
+    "appointments": {
+      "heading": "Visit history",
+      "empty": "No visits yet"
+    },
+    "loyalty": {
+      "heading": "Loyalty Points",
+      "worth": "Worth {amount} in discounts",
+      "visitPayment": "Visit payment",
+      "discountApplied": "Discount applied",
+      "copyLink": "Copy link",
+      "noTransactions": "No loyalty transactions yet."
+    },
+    "status": {
+      "pending": "pending",
+      "confirmed": "confirmed",
+      "completed": "completed",
+      "paid": "paid",
+      "cancelled": "cancelled",
+      "no_show": "no show"
+    }
+  },
+  "transactions": {
+    "title": "Transactions",
+    "filters": {
+      "allMethods": "All methods",
+      "cash": "Cash",
+      "card": "Card",
+      "transfer": "Transfer",
+      "online": "Online",
+      "from": "From",
+      "to": "To",
+      "clientPlaceholder": "Client or item name...",
+      "apply": "Apply",
+      "clear": "Clear"
+    },
+    "paymentMethods": {
+      "card": "Card",
+      "cash": "Cash",
+      "transfer": "Transfer",
+      "online": "Online"
+    },
+    "table": {
+      "receipt": "Receipt",
+      "client": "Client",
+      "employee": "Employee",
+      "items": "Services / Items",
+      "method": "Method",
+      "amount": "Amount",
+      "date": "Date"
+    },
+    "walkIn": "Walk-in",
+    "unassigned": "—",
+    "empty": "No sales yet",
+    "total": "Total for period:",
+    "itemCount": "{count} item",
+    "itemCountPlural": "{count} items",
+    "moreItems": "+ {count} more"
+  },
+  "inventoryDetail": {
+    "backToInventory": "← Inventory",
+    "editButton": "Edit",
+    "saveButton": "Save",
+    "cancelButton": "Cancel",
+    "deleteButton": "Delete item",
+    "deleteConfirm": "Delete this inventory item?",
+    "fields": {
+      "name": "Name",
+      "sku": "SKU",
+      "barcode": "Barcode",
+      "description": "Description",
+      "category": "Category",
+      "unit": "Unit",
+      "costPrice": "Cost price",
+      "sellPrice": "Sell price",
+      "lowStockThreshold": "Low-stock alert at",
+      "uploadPhoto": "Upload photo"
+    },
+    "stock": {
+      "current": "Current stock",
+      "addMovement": "Add movement",
+      "type": "Type",
+      "typeIn": "Incoming (+)",
+      "typeOut": "Outgoing (−)",
+      "typeAdjustment": "Adjustment",
+      "quantity": "Quantity",
+      "note": "Note",
+      "notePlaceholder": "e.g. Supplier delivery, Used in service…",
+      "save": "Save",
+      "saving": "Saving…"
+    },
+    "movements": {
+      "heading": "Movement history",
+      "empty": "No movements yet",
+      "table": {
+        "date": "Date",
+        "type": "Type",
+        "quantity": "Qty",
+        "note": "Note"
+      },
+      "typeIn": "in",
+      "typeOut": "out",
+      "typeAdjustment": "adj"
+    }
+  },
+  "billing": {
+    "heading": "Your plan",
+    "planSuffix": "plan",
+    "freePlan": "Free",
+    "activePlan": "Active",
+    "renewsOn": "Renews on",
+    "employees": "Employees",
+    "clients": "Clients",
+    "manageSubscription": "Manage subscription",
+    "mostPopular": "Most popular",
+    "upgrade": "Upgrade →",
+    "currentPlan": "Current plan",
+    "successMessage": "🎉 Subscription activated! Thank you for upgrading.",
+    "errorMessage": "Something went wrong. Please try again or contact support.",
+    "currentPlanBadge": "Current plan",
+    "upgradeButton": "Upgrade",
+    "downgradeButton": "Downgrade",
+    "cancelNote": "To cancel your subscription, manage it directly at",
+    "syncTitle": "Plan not updating after purchase?",
+    "syncDesc": "Sync your subscription status from Whop.",
+    "syncButton": "Sync plan",
+    "syncOk": "Plan updated to {tier}!",
+    "syncNotFound": "No active Whop membership found for this account. Make sure you purchased using the same email address.",
+    "syncError": "Sync failed. Please contact support at contato@seudominio.com.br.",
+    "plans": {
+      "free": {
+        "name": "Free",
+        "price": "$0",
+        "features": [
+          "1 employee",
+          "100 clients",
+          "50 bookings/month",
+          "POS · CRM · Inventory",
+          "All notifications"
+        ]
+      },
+      "starter": {
+        "name": "Starter",
+        "price": "$19/mo",
+        "features": [
+          "5 employees",
+          "Unlimited clients",
+          "Unlimited bookings"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "$39/mo",
+        "features": [
+          "15 employees",
+          "Unlimited clients",
+          "Analytics",
+          "Loyalty program",
+          "Custom domain"
+        ]
+      },
+      "agency": {
+        "name": "Agency",
+        "price": "$79/mo",
+        "features": [
+          "Unlimited employees",
+          "Multiple locations",
+          "White-label",
+          "API access"
+        ]
+      }
+    }
+  },
+  "newClient": {
+    "title": "New client",
+    "backToClients": "← Clients",
+    "fields": {
+      "name": "Full name *",
+      "namePlaceholder": "Jane Smith",
+      "phone": "Phone",
+      "phonePlaceholder": "+1 234 567 8900",
+      "email": "Email",
+      "emailPlaceholder": "jane@example.com",
+      "whatsapp": "WhatsApp",
+      "whatsappPlaceholder": "+79001234567",
+      "birthday": "Birthday",
+      "notes": "Notes",
+      "notesPlaceholder": "Any notes…",
+      "tags": "Tags",
+      "tagsPlaceholder": "vip, regular…"
+    },
+    "submitButton": "Add client",
+    "cancelButton": "Cancel"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "proFeatureTitle": "Analytics — Pro feature",
+    "proFeatureDesc": "Track revenue, top services, and client growth. Available on Pro and Agency plans.",
+    "upgradeButton": "Upgrade to Pro →",
+    "seePlansButton": "See all plan features →",
+    "periods": {
+      "7d": "7 days",
+      "30d": "30 days",
+      "month": "This month",
+      "3m": "3 months"
+    },
+    "kpi": {
+      "totalRevenue": "Total Revenue",
+      "totalBookings": "Total Bookings",
+      "newClients": "New Clients",
+      "avgPerBooking": "Avg. per Booking"
+    },
+    "chart": {
+      "heading": "Revenue",
+      "noData": "No data for this period",
+      "tooltip": "Revenue"
+    },
+    "topServices": {
+      "heading": "Top Services",
+      "colService": "Service",
+      "colBookings": "Bookings",
+      "colRevenue": "Revenue",
+      "noData": "No data"
+    },
+    "topClients": {
+      "heading": "Top Clients",
+      "colClient": "Client",
+      "colVisits": "Visits",
+      "colSpent": "Total spent",
+      "noData": "No data"
+    }
+  },
+  "newInventoryItem": {
+    "title": "New item",
+    "backToInventory": "← Inventory",
+    "fields": {
+      "name": "Name *",
+      "namePlaceholder": "Shampoo 500ml",
+      "sku": "SKU",
+      "skuPlaceholder": "SKU-001",
+      "barcode": "Barcode",
+      "barcodePlaceholder": "Scan or type barcode",
+      "description": "Description",
+      "descriptionPlaceholder": "Optional notes about this item",
+      "category": "Category",
+      "categoryPlaceholder": "Hair care",
+      "unit": "Unit",
+      "unitPlaceholder": "pcs",
+      "quantity": "Initial quantity",
+      "costPrice": "Cost price",
+      "sellPrice": "Sell price",
+      "lowStockThreshold": "Low-stock alert at"
+    },
+    "submitButton": "Add item",
+    "cancelButton": "Cancel"
+  }
+}

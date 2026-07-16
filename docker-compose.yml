@@ -1,0 +1,61 @@
+services:
+  # ── One-shot migration runner ──────────────────────────────────────────────
+  # Runs all pending SQL migrations, then exits.
+  # The app service will not start until this completes successfully.
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: atendepro-app:local
+    command: node /app/scripts/migrate.js
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    restart: 'no'
+
+  # ── Main application ───────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: atendepro-app:local
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      # Hardcoded to "selfhosted" — intentionally overrides any value in .env.
+      # This prevents accidentally running the open-source build in SaaS billing mode.
+      # To run in SaaS mode, remove this line and set NEXT_PUBLIC_DEPLOYMENT_MODE=saas in .env.
+      - NEXT_PUBLIC_DEPLOYMENT_MODE=selfhosted
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Nginx reverse proxy with SSL termination
+  # Uncomment and configure if not using Cloudflare tunnel
+  #
+  # nginx:
+  #   image: nginx:alpine
+  #   restart: unless-stopped
+  #   ports:
+  #     - '80:80'
+  #     - '443:443'
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+  #     - ./ssl:/etc/nginx/ssl:ro
+  #   depends_on:
+  #     - app
+
+networks:
+  default:
+    name: atendepro_network
