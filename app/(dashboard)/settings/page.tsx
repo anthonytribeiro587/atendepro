@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { Header } from '@/components/layout/header'
 import { getTranslations } from 'next-intl/server'
 import { SettingsTabs } from './settings-tabs'
+import { EvolutionTestCard } from '@/components/evolution-test-card'
 
 export default async function SettingsPage() {
   const supabase = createClient()
@@ -10,12 +11,19 @@ export default async function SettingsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: business } = await supabase
+  // select('*') keeps this page compatible while optional notification and
+  // white-label columns are introduced incrementally in the database.
+  const { data: business, error: businessError } = await supabase
     .from('businesses')
-    .select('id, name, slug, type, phone, email, address, timezone, currency, plan, plan_expires_at, telegram_bot_token, telegram_chat_id, viber_bot_token, viber_chat_id, owner_whatsapp, ls_customer_id, email_provider, smtp_host, smtp_port, smtp_user, smtp_pass, smtp_from, resend_api_key, meta_whatsapp_phone_number_id, meta_whatsapp_access_token, wa_template_confirmation, wa_template_reminder, wa_template_thankyou, wa_template_reactivation, wa_template_birthday, wa_template_language, brand_color, notification_language, custom_domain, custom_domain_status, logo_url, loyalty_enabled, loyalty_points_per_dollar, loyalty_min_redeem_points, loyalty_redeem_value, enabled_modules')
+    .select('*')
     .eq('owner_id', user.id)
+    .order('created_at', { ascending: true })
+    .limit(1)
     .maybeSingle()
 
+  if (businessError) {
+    console.error('[settings] business query failed:', businessError.message)
+  }
   if (!business) redirect('/onboarding')
 
   const [
@@ -40,9 +48,17 @@ export default async function SettingsPage() {
       .order('day_of_week'),
   ])
 
+  const evolutionInstance = process.env.EVOLUTION_INSTANCE || process.env.EVOLUTION_INSTANCE_NAME || null
+  const evolutionEnabled = Boolean(
+    process.env.EVOLUTION_API_URL &&
+    process.env.EVOLUTION_API_KEY &&
+    evolutionInstance
+  )
+
   return (
     <>
       <Header title={t('pageTitle')} />
+      <EvolutionTestCard enabled={evolutionEnabled} instance={evolutionInstance} />
       <SettingsTabs
         business={business}
         services={services ?? []}
