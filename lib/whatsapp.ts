@@ -1,8 +1,9 @@
 /**
- * WhatsApp provider abstraction.
+ * WhatsApp provider abstraction and message templates.
  *
- * Credentials saved for a business have priority. Environment variables remain
- * as a fallback for the shared test instance.
+ * Priority:
+ * 1. Credentials saved for the current business/tenant.
+ * 2. Shared environment variables used as a fallback/test instance.
  */
 
 const META_BASE = 'https://graph.facebook.com/v20.0'
@@ -13,6 +14,138 @@ export interface WhatsAppCredentials {
   evolutionApiUrl?: string | null
   evolutionApiKey?: string | null
   evolutionInstance?: string | null
+}
+
+export interface WhatsAppTemplateVariables {
+  cliente?: string | null
+  servico?: string | null
+  data?: string | null
+  hora?: string | null
+  empresa?: string | null
+  profissional?: string | null
+  endereco?: string | null
+  link_agendamento?: string | null
+}
+
+export interface EvolutionTemplates {
+  confirmation: string
+  reminder24h: string
+  reminder1h: string
+  thankyou: string
+  reactivation: string
+  birthday: string
+}
+
+export const DEFAULT_EVOLUTION_TEMPLATES: EvolutionTemplates = {
+  confirmation: [
+    '✅ *Agendamento confirmado!*',
+    '',
+    'Olá, {{cliente}}!',
+    'Seu horário foi reservado com sucesso.',
+    '',
+    '*Serviço:* {{servico}}',
+    '*Data:* {{data}}',
+    '*Horário:* {{hora}}',
+    '*Profissional:* {{profissional}}',
+    '*Endereço:* {{endereco}}',
+    '',
+    'Até breve! — {{empresa}}',
+  ].join('\n'),
+  reminder24h: [
+    '📅 *Lembrete de agendamento*',
+    '',
+    'Olá, {{cliente}}!',
+    'Passando para lembrar que seu atendimento é amanhã.',
+    '',
+    '*Serviço:* {{servico}}',
+    '*Data:* {{data}}',
+    '*Horário:* {{hora}}',
+    '*Profissional:* {{profissional}}',
+    '*Endereço:* {{endereco}}',
+    '',
+    'Esperamos você! — {{empresa}}',
+  ].join('\n'),
+  reminder1h: [
+    '⏰ *Seu atendimento está próximo!*',
+    '',
+    'Olá, {{cliente}}!',
+    'Seu horário começa em aproximadamente 1 hora.',
+    '',
+    '*Serviço:* {{servico}}',
+    '*Horário:* {{hora}}',
+    '*Profissional:* {{profissional}}',
+    '*Endereço:* {{endereco}}',
+    '',
+    'Até já! — {{empresa}}',
+  ].join('\n'),
+  thankyou: [
+    '💚 *Obrigado pela visita!*',
+    '',
+    'Olá, {{cliente}}!',
+    'Foi um prazer atender você em *{{servico}}*.',
+    '',
+    'Esperamos ver você novamente!',
+    '{{link_agendamento}}',
+    '',
+    '— {{empresa}}',
+  ].join('\n'),
+  reactivation: [
+    '👋 *Sentimos sua falta, {{cliente}}!*',
+    '',
+    'Já faz algum tempo desde sua última visita ao {{empresa}}.',
+    'Será um prazer receber você novamente.',
+    '',
+    '{{link_agendamento}}',
+  ].join('\n'),
+  birthday: [
+    '🎂 *Feliz aniversário, {{cliente}}!*',
+    '',
+    'Toda a equipe do {{empresa}} deseja um dia maravilhoso para você.',
+    'Que tal reservar um momento especial?',
+    '',
+    '{{link_agendamento}}',
+  ].join('\n'),
+}
+
+const PLACEHOLDER_PATTERN = /{{\s*(cliente|servico|data|hora|empresa|profissional|endereco|link_agendamento)\s*}}/gi
+
+/**
+ * Renders a tenant-defined Evolution template.
+ * Lines containing an optional placeholder with no value are removed, avoiding
+ * labels such as "Profissional:" or "Endereço:" without content.
+ */
+export function renderWhatsAppTemplate(
+  template: string | null | undefined,
+  variables: WhatsAppTemplateVariables,
+  fallback: string
+): string {
+  const source = template?.trim() || fallback
+  const values: Record<string, string> = {
+    cliente: variables.cliente?.trim() || '',
+    servico: variables.servico?.trim() || '',
+    data: variables.data?.trim() || '',
+    hora: variables.hora?.trim() || '',
+    empresa: variables.empresa?.trim() || '',
+    profissional: variables.profissional?.trim() || '',
+    endereco: variables.endereco?.trim() || '',
+    link_agendamento: variables.link_agendamento?.trim()
+      ? `Agende seu próximo horário:\n${variables.link_agendamento.trim()}`
+      : '',
+  }
+
+  const renderedLines = source.split('\n').flatMap((line) => {
+    const placeholders = Array.from(line.matchAll(PLACEHOLDER_PATTERN))
+    if (placeholders.some((match) => !values[match[1].toLowerCase()])) return []
+
+    return [
+      line.replace(PLACEHOLDER_PATTERN, (_match, key: string) => values[key.toLowerCase()] ?? ''),
+    ]
+  })
+
+  return renderedLines
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
 }
 
 export function normalizeWhatsAppNumber(phone: string): string {
@@ -122,12 +255,8 @@ export async function sendWhatsAppMessage(
   const hasBusinessMeta = Boolean(credentials?.phoneNumberId && credentials?.accessToken)
   const configuredProvider = process.env.WHATSAPP_PROVIDER?.trim().toLowerCase()
 
-  if (hasBusinessEvolution) {
-    return sendWithEvolution(normalizedTo, message, credentials)
-  }
-  if (hasBusinessMeta) {
-    return sendWithMeta(normalizedTo, message, credentials)
-  }
+  if (hasBusinessEvolution) return sendWithEvolution(normalizedTo, message, credentials)
+  if (hasBusinessMeta) return sendWithMeta(normalizedTo, message, credentials)
   if (configuredProvider === 'evolution' || (configuredProvider !== 'meta' && isEvolutionConfigured())) {
     return sendWithEvolution(normalizedTo, message)
   }
@@ -144,19 +273,19 @@ export function tplBookingConfirmation(opts: {
   employeeName?: string
   address?: string
 }): string {
-  const lines = [
-    '✅ Agendamento confirmado!',
-    '',
-    `Olá, ${opts.clientName}!`,
-    'Seu horário foi reservado com sucesso:',
-    '',
-    `Serviço: ${opts.serviceName}`,
-    `Data: ${opts.date} às ${opts.time}`,
-  ]
-  if (opts.employeeName) lines.push(`Profissional: ${opts.employeeName}`)
-  if (opts.address) lines.push(`Endereço: ${opts.address}`)
-  lines.push('', `Até breve — ${opts.businessName}`)
-  return lines.join('\n')
+  return renderWhatsAppTemplate(
+    DEFAULT_EVOLUTION_TEMPLATES.confirmation,
+    {
+      cliente: opts.clientName,
+      servico: opts.serviceName,
+      data: opts.date,
+      hora: opts.time,
+      empresa: opts.businessName,
+      profissional: opts.employeeName,
+      endereco: opts.address,
+    },
+    DEFAULT_EVOLUTION_TEMPLATES.confirmation
+  )
 }
 
 export function tplReminder(opts: {
@@ -165,20 +294,27 @@ export function tplReminder(opts: {
   date: string
   time: string
   businessName: string
+  employeeName?: string
+  address?: string
   isOneHour?: boolean
 }): string {
-  const when = opts.isOneHour ? 'em aproximadamente 1 hora ⏰' : 'amanhã 📅'
-  return [
-    '🔔 Lembrete de agendamento',
-    '',
-    `Olá, ${opts.clientName}!`,
-    `Seu atendimento é ${when}:`,
-    '',
-    `Serviço: ${opts.serviceName}`,
-    `Data: ${opts.date} às ${opts.time}`,
-    '',
-    `Até breve — ${opts.businessName}`,
-  ].join('\n')
+  const template = opts.isOneHour
+    ? DEFAULT_EVOLUTION_TEMPLATES.reminder1h
+    : DEFAULT_EVOLUTION_TEMPLATES.reminder24h
+
+  return renderWhatsAppTemplate(
+    template,
+    {
+      cliente: opts.clientName,
+      servico: opts.serviceName,
+      data: opts.date,
+      hora: opts.time,
+      empresa: opts.businessName,
+      profissional: opts.employeeName,
+      endereco: opts.address,
+    },
+    template
+  )
 }
 
 export function tplThankYou(opts: {
@@ -187,17 +323,16 @@ export function tplThankYou(opts: {
   businessName: string
   bookingUrl?: string
 }): string {
-  const lines = [
-    '✅ Obrigado pela visita!',
-    '',
-    `Olá, ${opts.clientName}!`,
-    `Foi um prazer atender você em ${opts.serviceName}.`,
-    '',
-    'Esperamos ver você novamente!',
-  ]
-  if (opts.bookingUrl) lines.push('', 'Agende seu próximo horário:', opts.bookingUrl)
-  lines.push('', `— ${opts.businessName}`)
-  return lines.join('\n')
+  return renderWhatsAppTemplate(
+    DEFAULT_EVOLUTION_TEMPLATES.thankyou,
+    {
+      cliente: opts.clientName,
+      servico: opts.serviceName,
+      empresa: opts.businessName,
+      link_agendamento: opts.bookingUrl,
+    },
+    DEFAULT_EVOLUTION_TEMPLATES.thankyou
+  )
 }
 
 export function tplReactivation(opts: {
@@ -205,14 +340,15 @@ export function tplReactivation(opts: {
   businessName: string
   bookingUrl?: string
 }): string {
-  const lines = [
-    `👋 Sentimos sua falta, ${opts.clientName}!`,
-    '',
-    `Já faz algum tempo desde sua última visita ao ${opts.businessName}.`,
-    'Será um prazer receber você novamente!',
-  ]
-  if (opts.bookingUrl) lines.push('', 'Agende seu horário:', opts.bookingUrl)
-  return lines.join('\n')
+  return renderWhatsAppTemplate(
+    DEFAULT_EVOLUTION_TEMPLATES.reactivation,
+    {
+      cliente: opts.clientName,
+      empresa: opts.businessName,
+      link_agendamento: opts.bookingUrl,
+    },
+    DEFAULT_EVOLUTION_TEMPLATES.reactivation
+  )
 }
 
 export function tplBirthday(opts: {
@@ -220,13 +356,15 @@ export function tplBirthday(opts: {
   businessName: string
   bookingUrl?: string
 }): string {
-  const lines = [
-    `🎂 Feliz aniversário, ${opts.clientName}!`,
-    '',
-    `Toda a equipe do ${opts.businessName} deseja um dia maravilhoso para você.`,
-  ]
-  if (opts.bookingUrl) lines.push('', 'Agende um momento especial:', opts.bookingUrl)
-  return lines.join('\n')
+  return renderWhatsAppTemplate(
+    DEFAULT_EVOLUTION_TEMPLATES.birthday,
+    {
+      cliente: opts.clientName,
+      empresa: opts.businessName,
+      link_agendamento: opts.bookingUrl,
+    },
+    DEFAULT_EVOLUTION_TEMPLATES.birthday
+  )
 }
 
 export function tplLowStock(opts: {
@@ -236,7 +374,7 @@ export function tplLowStock(opts: {
   threshold: number
 }): string {
   return [
-    '⚠️ Alerta de estoque baixo',
+    '⚠️ *Alerta de estoque baixo*',
     '',
     `📦 ${opts.itemName}`,
     `Atual: ${opts.quantity} ${opts.unit} (mínimo: ${opts.threshold})`,

@@ -1,19 +1,15 @@
 /**
- * lib/email.ts
- *
- * Высокоуровневые функции отправки email + HTML-шаблоны.
- * Транспорт (Resend / SMTP) определяется в lib/mailer.ts через env-переменные.
+ * Funções de envio de e-mail e modelos HTML do AtendePRO.
+ * O transporte (Resend ou SMTP) é definido em lib/mailer.ts.
  */
 
 import { sendMail, getFromAddress } from './mailer'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
-// ─── Shared layout ────────────────────────────────────────────────────────────
-
 function layout(businessName: string, body: string): string {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -29,15 +25,11 @@ function layout(businessName: string, body: string): string {
               <span style="color:#ffffff;font-size:20px;font-weight:700;">${businessName}</span>
             </td>
           </tr>
-          <tr>
-            <td style="padding:32px;">
-              ${body}
-            </td>
-          </tr>
+          <tr><td style="padding:32px;">${body}</td></tr>
           <tr>
             <td style="background:#f9fafb;padding:16px 32px;border-top:1px solid #e5e7eb;">
               <p style="margin:0;font-size:12px;color:#9ca3af;">
-                Powered by <a href="${APP_URL}" style="color:#2563eb;text-decoration:none;">AtendePRO</a>
+                Enviado por <a href="${APP_URL}" style="color:#2563eb;text-decoration:none;">AtendePRO</a>
               </p>
             </td>
           </tr>
@@ -74,8 +66,6 @@ function info(rows: [string, string][]) {
   return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">${cells}</table>`
 }
 
-// ─── Booking confirmation ─────────────────────────────────────────────────────
-
 export async function sendBookingConfirmation(opts: {
   to: string
   clientName: string
@@ -88,27 +78,25 @@ export async function sendBookingConfirmation(opts: {
   calendarUrl?: string
 }) {
   const body = `
-    ${h1('Booking confirmed!')}
-    ${p(`Hi ${firstName(opts.clientName)}, your appointment is confirmed.`)}
+    ${h1('Agendamento confirmado!')}
+    ${p(`Olá, ${firstName(opts.clientName)}! Seu horário foi confirmado com sucesso.`)}
     ${info([
-      ['Service', opts.serviceName],
-      ['Date', opts.date],
-      ['Time', opts.time],
-      ...(opts.employeeName ? [['Employee', opts.employeeName] as [string, string]] : []),
-      ...(opts.address ? [['Address', opts.address] as [string, string]] : []),
+      ['Serviço', opts.serviceName],
+      ['Data', opts.date],
+      ['Horário', opts.time],
+      ...(opts.employeeName ? [['Profissional', opts.employeeName] as [string, string]] : []),
+      ...(opts.address ? [['Endereço', opts.address] as [string, string]] : []),
     ])}
-    ${p('See you soon!')}
-    ${opts.calendarUrl ? p(`<a href="${opts.calendarUrl}" style="color:#2563eb;">Add to Google Calendar</a>`) : ''}
+    ${p('Até breve!')}
+    ${opts.calendarUrl ? p(`<a href="${opts.calendarUrl}" style="color:#2563eb;">Adicionar ao Google Agenda</a>`) : ''}
   `
   return sendMail({
     from: getFromAddress(opts.businessName),
     to: opts.to,
-    subject: `Booking confirmed — ${opts.serviceName} at ${opts.time}`,
+    subject: `Agendamento confirmado — ${opts.serviceName} às ${opts.time}`,
     html: layout(opts.businessName, body),
   })
 }
-
-// ─── Reminder ─────────────────────────────────────────────────────────────────
 
 export async function sendReminder(opts: {
   to: string
@@ -121,28 +109,26 @@ export async function sendReminder(opts: {
   address?: string
   isOneHour?: boolean
 }) {
-  const when = opts.isOneHour ? 'in 1 hour' : 'tomorrow'
+  const when = opts.isOneHour ? 'em aproximadamente 1 hora' : 'amanhã'
   const body = `
-    ${h1(`Reminder: your appointment is ${when}`)}
-    ${p(`Hi ${firstName(opts.clientName)}, just a friendly reminder about your upcoming appointment.`)}
+    ${h1(`Lembrete: seu atendimento é ${when}`)}
+    ${p(`Olá, ${firstName(opts.clientName)}! Este é um lembrete do seu próximo atendimento.`)}
     ${info([
-      ['Service', opts.serviceName],
-      ['Date', opts.date],
-      ['Time', opts.time],
-      ...(opts.employeeName ? [['Employee', opts.employeeName] as [string, string]] : []),
-      ...(opts.address ? [['Address', opts.address] as [string, string]] : []),
+      ['Serviço', opts.serviceName],
+      ['Data', opts.date],
+      ['Horário', opts.time],
+      ...(opts.employeeName ? [['Profissional', opts.employeeName] as [string, string]] : []),
+      ...(opts.address ? [['Endereço', opts.address] as [string, string]] : []),
     ])}
-    ${p('We look forward to seeing you!')}
+    ${p('Esperamos você!')}
   `
   return sendMail({
     from: getFromAddress(opts.businessName),
     to: opts.to,
-    subject: `Reminder: ${opts.serviceName} ${when} at ${opts.time}`,
+    subject: `Lembrete: ${opts.serviceName} ${when}, às ${opts.time}`,
     html: layout(opts.businessName, body),
   })
 }
-
-// ─── Thank-you ────────────────────────────────────────────────────────────────
 
 export async function sendThankYou(opts: {
   to: string
@@ -152,20 +138,18 @@ export async function sendThankYou(opts: {
   bookingUrl?: string
 }) {
   const body = `
-    ${h1('Thank you for your visit!')}
-    ${p(`Hi ${firstName(opts.clientName)}, thank you for choosing ${opts.businessName}. We hope to see you again!`)}
-    ${p(`You were in for: <strong>${opts.serviceName}</strong>`)}
-    ${opts.bookingUrl ? btn('Book your next appointment', opts.bookingUrl) : ''}
+    ${h1('Obrigado pela sua visita!')}
+    ${p(`Olá, ${firstName(opts.clientName)}! Obrigado por escolher ${opts.businessName}. Esperamos receber você novamente.`)}
+    ${p(`Serviço realizado: <strong>${opts.serviceName}</strong>`)}
+    ${opts.bookingUrl ? btn('Agendar próximo horário', opts.bookingUrl) : ''}
   `
   return sendMail({
     from: getFromAddress(opts.businessName),
     to: opts.to,
-    subject: `Thanks for visiting ${opts.businessName}!`,
+    subject: `Obrigado por visitar ${opts.businessName}!`,
     html: layout(opts.businessName, body),
   })
 }
-
-// ─── Re-activation ────────────────────────────────────────────────────────────
 
 export async function sendReactivation(opts: {
   to: string
@@ -174,20 +158,18 @@ export async function sendReactivation(opts: {
   bookingUrl?: string
 }) {
   const body = `
-    ${h1('We miss you!')}
-    ${p(`Hi ${firstName(opts.clientName)}, it's been a while since your last visit to ${opts.businessName}.`)}
-    ${p("We'd love to see you again. Book your next appointment anytime — it only takes a minute.")}
-    ${opts.bookingUrl ? btn('Book now', opts.bookingUrl) : ''}
+    ${h1('Sentimos sua falta!')}
+    ${p(`Olá, ${firstName(opts.clientName)}! Já faz algum tempo desde sua última visita ao ${opts.businessName}.`)}
+    ${p('Será um prazer receber você novamente. Seu próximo agendamento leva apenas alguns instantes.')}
+    ${opts.bookingUrl ? btn('Agendar agora', opts.bookingUrl) : ''}
   `
   return sendMail({
     from: getFromAddress(opts.businessName),
     to: opts.to,
-    subject: `${opts.businessName} misses you — book your next visit`,
+    subject: `${opts.businessName} está com saudades — agende sua próxima visita`,
     html: layout(opts.businessName, body),
   })
 }
-
-// ─── Birthday ─────────────────────────────────────────────────────────────────
 
 export async function sendBirthday(opts: {
   to: string
@@ -196,20 +178,18 @@ export async function sendBirthday(opts: {
   bookingUrl?: string
 }) {
   const body = `
-    ${h1('🎂 Happy Birthday!')}
-    ${p(`Hi ${firstName(opts.clientName)}, wishing you a wonderful birthday from the whole team at ${opts.businessName}!`)}
-    ${p('To celebrate, come in and treat yourself.')}
-    ${opts.bookingUrl ? btn('Book a visit', opts.bookingUrl) : ''}
+    ${h1('🎂 Feliz aniversário!')}
+    ${p(`Olá, ${firstName(opts.clientName)}! Toda a equipe do ${opts.businessName} deseja um aniversário maravilhoso para você.`)}
+    ${p('Aproveite o seu dia e reserve um momento especial para cuidar de você.')}
+    ${opts.bookingUrl ? btn('Agendar um horário', opts.bookingUrl) : ''}
   `
   return sendMail({
     from: getFromAddress(opts.businessName),
     to: opts.to,
-    subject: `Happy Birthday from ${opts.businessName}! 🎂`,
+    subject: `Feliz aniversário — ${opts.businessName}! 🎂`,
     html: layout(opts.businessName, body),
   })
 }
-
-// ─── Low-stock alert ──────────────────────────────────────────────────────────
 
 export async function sendLowStockAlert(opts: {
   to: string
@@ -217,50 +197,44 @@ export async function sendLowStockAlert(opts: {
   items: { name: string; quantity: number; unit: string; threshold: number }[]
 }) {
   const rows = opts.items.map(
-    (i) => [i.name, `${i.quantity} ${i.unit} (threshold: ${i.threshold})`] as [string, string]
+    (item) => [item.name, `${item.quantity} ${item.unit} (mínimo: ${item.threshold})`] as [string, string]
   )
   const body = `
-    ${h1('Low-stock alert')}
-    ${p(`The following items in ${opts.businessName} are running low:`)}
+    ${h1('Alerta de estoque baixo')}
+    ${p(`Os seguintes produtos do ${opts.businessName} estão com estoque baixo:`)}
     ${info(rows)}
-    ${btn('Go to Inventory', `${APP_URL}/inventory`)}
+    ${btn('Abrir estoque', `${APP_URL}/inventory`)}
   `
   return sendMail({
     from: getFromAddress(opts.businessName),
     to: opts.to,
-    subject: `Low-stock alert — ${opts.items.length} item${opts.items.length > 1 ? 's' : ''} running low`,
+    subject: `Alerta de estoque — ${opts.items.length} ${opts.items.length === 1 ? 'item precisa' : 'itens precisam'} de reposição`,
     html: layout(opts.businessName, body),
   })
 }
 
-// ─── Name helpers ─────────────────────────────────────────────────────────────
-
-/** "KONSTANTIN UMNOV" → "Konstantin Umnov", "kostya" → "Kostya" */
 function toTitleCase(name: string): string {
   return name
     .trim()
-    .toLowerCase()
-    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .toLocaleLowerCase('pt-BR')
+    .replace(/(^|[\s-])\p{L}/gu, (letter) => letter.toLocaleUpperCase('pt-BR'))
 }
 
-/** "Konstantin Umnov" → "Konstantin", "kostya" → "Kostya" */
 function firstName(name: string): string {
   return toTitleCase(name).split(/\s+/)[0]
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-export function formatEmailDate(iso: string, timezone = 'UTC') {
-  return new Date(iso).toLocaleDateString('en-US', {
+export function formatEmailDate(iso: string, timezone = 'America/Sao_Paulo') {
+  return new Date(iso).toLocaleDateString('pt-BR', {
     weekday: 'long',
-    day: 'numeric',
+    day: '2-digit',
     month: 'long',
     timeZone: timezone,
   })
 }
 
-export function formatEmailTime(iso: string, timezone = 'UTC') {
-  return new Date(iso).toLocaleTimeString('en-US', {
+export function formatEmailTime(iso: string, timezone = 'America/Sao_Paulo') {
+  return new Date(iso).toLocaleTimeString('pt-BR', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,

@@ -27,6 +27,12 @@ export default async function SettingsPage() {
     evolution_api_key?: string | null
     evolution_instance?: string | null
     evolution_enabled?: boolean | null
+    evolution_template_confirmation?: string | null
+    evolution_template_reminder_24h?: string | null
+    evolution_template_reminder_1h?: string | null
+    evolution_template_thankyou?: string | null
+    evolution_template_reactivation?: string | null
+    evolution_template_birthday?: string | null
   }
 
   const evolutionConfigured = Boolean(
@@ -76,6 +82,14 @@ export default async function SettingsPage() {
         initialApiUrl={runtimeBusiness.evolution_api_url ?? ''}
         initialInstance={runtimeBusiness.evolution_instance ?? ''}
         configured={evolutionConfigured}
+        initialTemplates={{
+          confirmation: runtimeBusiness.evolution_template_confirmation ?? '',
+          reminder24h: runtimeBusiness.evolution_template_reminder_24h ?? '',
+          reminder1h: runtimeBusiness.evolution_template_reminder_1h ?? '',
+          thankyou: runtimeBusiness.evolution_template_thankyou ?? '',
+          reactivation: runtimeBusiness.evolution_template_reactivation ?? '',
+          birthday: runtimeBusiness.evolution_template_birthday ?? '',
+        }}
       />
     </>
   )

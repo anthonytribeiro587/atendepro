@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase/server'
-import { normalizeWhatsAppNumber } from '@/lib/whatsapp'
+import {
+  DEFAULT_EVOLUTION_TEMPLATES,
+  normalizeWhatsAppNumber,
+  renderWhatsAppTemplate,
+  type EvolutionTemplates,
+} from '@/lib/whatsapp'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -22,6 +27,12 @@ function normalizeApiUrl(value: unknown): string {
   return normalized
 }
 
+function cleanTemplate(value: unknown, fallback: string): string {
+  if (typeof value !== 'string') return fallback
+  const cleaned = value.trim().slice(0, 6000)
+  return cleaned || fallback
+}
+
 export async function POST(request: NextRequest) {
   try {
     const authClient = createServerClient()
@@ -40,12 +51,21 @@ export async function POST(request: NextRequest) {
       apiKey?: string
       instance?: string
       testNumber?: string
+      templates?: Partial<EvolutionTemplates>
     }
 
     const action = body.action === 'test' ? 'test' : 'save'
     const apiUrl = normalizeApiUrl(body.apiUrl)
     const instance = body.instance?.trim().slice(0, 100) ?? ''
     const suppliedApiKey = body.apiKey?.trim() ?? ''
+    const templates: EvolutionTemplates = {
+      confirmation: cleanTemplate(body.templates?.confirmation, DEFAULT_EVOLUTION_TEMPLATES.confirmation),
+      reminder24h: cleanTemplate(body.templates?.reminder24h, DEFAULT_EVOLUTION_TEMPLATES.reminder24h),
+      reminder1h: cleanTemplate(body.templates?.reminder1h, DEFAULT_EVOLUTION_TEMPLATES.reminder1h),
+      thankyou: cleanTemplate(body.templates?.thankyou, DEFAULT_EVOLUTION_TEMPLATES.thankyou),
+      reactivation: cleanTemplate(body.templates?.reactivation, DEFAULT_EVOLUTION_TEMPLATES.reactivation),
+      birthday: cleanTemplate(body.templates?.birthday, DEFAULT_EVOLUTION_TEMPLATES.birthday),
+    }
 
     if (!apiUrl || !instance) {
       return jsonError('missing_fields', 'Informe a URL da Evolution e o nome da instância.')
@@ -57,18 +77,20 @@ export async function POST(request: NextRequest) {
 
     const { data: business, error: lookupError } = await admin
       .from('businesses')
-      .select('id, evolution_api_key')
+      .select('id, name, evolution_api_key')
       .eq('owner_id', user.id)
       .order('created_at', { ascending: true })
       .limit(1)
       .maybeSingle()
 
     if (lookupError) {
-      const missingMigration = lookupError.message.includes('evolution_api_key')
+      const missingMigration =
+        lookupError.message.includes('evolution_api_key') ||
+        lookupError.message.includes('evolution_template_')
       return jsonError(
         'business_lookup_failed',
         missingMigration
-          ? 'Execute a migration 029_evolution_per_business.sql no Supabase.'
+          ? 'Execute as migrations 029 e 030 da Evolution no Supabase.'
           : lookupError.message,
         500
       )
@@ -87,12 +109,25 @@ export async function POST(request: NextRequest) {
         evolution_api_key: apiKey,
         evolution_instance: instance,
         evolution_enabled: true,
+        evolution_template_confirmation: templates.confirmation,
+        evolution_template_reminder_24h: templates.reminder24h,
+        evolution_template_reminder_1h: templates.reminder1h,
+        evolution_template_thankyou: templates.thankyou,
+        evolution_template_reactivation: templates.reactivation,
+        evolution_template_birthday: templates.birthday,
       })
       .eq('id', business.id)
       .eq('owner_id', user.id)
 
     if (updateError) {
-      return jsonError('save_failed', updateError.message, 500)
+      const missingMigration = updateError.message.includes('evolution_template_')
+      return jsonError(
+        'save_failed',
+        missingMigration
+          ? 'Execute a migration 030_evolution_message_templates.sql no Supabase.'
+          : updateError.message,
+        500
+      )
     }
 
     if (action === 'test') {
@@ -101,16 +136,37 @@ export async function POST(request: NextRequest) {
         return jsonError('invalid_test_number', 'Informe o número no formato 55 + DDD + telefone.')
       }
 
+      const testMessage = renderWhatsAppTemplate(
+        templates.confirmation,
+        {
+          cliente: 'Cliente de teste',
+          servico: 'Serviço de demonstração',
+          data: new Intl.DateTimeFormat('pt-BR', {
+            weekday: 'long',
+            day: '2-digit',
+            month: 'long',
+            timeZone: 'America/Sao_Paulo',
+          }).format(new Date()),
+          hora: new Intl.DateTimeFormat('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+            timeZone: 'America/Sao_Paulo',
+          }).format(new Date()),
+          empresa: business.name,
+          profissional: 'Profissional de teste',
+          endereco: 'Endereço de demonstração',
+        },
+        DEFAULT_EVOLUTION_TEMPLATES.confirmation
+      )
+
       const evolutionResponse = await fetch(`${apiUrl}/message/sendText/${encodeURIComponent(instance)}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           apikey: apiKey,
         },
-        body: JSON.stringify({
-          number,
-          text: '✅ Evolution API conectada ao AtendePRO. A empresa já pode enviar confirmações de agendamento.',
-        }),
+        body: JSON.stringify({ number, text: testMessage }),
         cache: 'no-store',
         signal: AbortSignal.timeout(12_000),
       })
@@ -127,14 +183,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         ok: true,
         configured: true,
-        message: 'Credenciais salvas e mensagem de teste enviada.',
+        message: 'Credenciais e mensagens salvas. A confirmação de teste foi enviada.',
       })
     }
 
     return NextResponse.json({
       ok: true,
       configured: true,
-      message: 'Integração Evolution salva para esta empresa.',
+      message: 'Integração e mensagens automáticas da Evolution foram salvas.',
     })
   } catch (error) {
     return jsonError(
