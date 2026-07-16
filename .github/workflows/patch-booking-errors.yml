@@ -1,0 +1,95 @@
+name: Melhorar diagnóstico do agendamento
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/patch-booking-errors.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Exibir erro real da API no formulário
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('app/book/[slug]/booking-form.tsx')
+          text = path.read_text(encoding='utf-8')
+
+          old = '''      if (!res.ok) throw new Error(await res.text())
+
+      const data = await res.json()
+      setClientId(data.clientId ?? null)
+      setClientHasTelegram(data.hasTelegram ?? false)
+      setStep('done')
+      setSaving(false)
+    } catch {
+      setSaving(false)
+      setBookingError('Something went wrong. Please try again or contact the business directly.')
+    }
+'''
+
+          new = '''      const payload = await res.json().catch(() => ({ error: 'invalid_server_response' })) as {
+        error?: string
+        message?: string
+        details?: Record<string, string[]>
+        appointmentId?: string
+        clientId?: string
+        hasTelegram?: boolean
+      }
+
+      if (!res.ok) {
+        const messages: Record<string, string> = {
+          validation_failed: 'Os dados enviados não passaram na validação.',
+          contact_required: 'Informe um telefone ou e-mail para confirmar o agendamento.',
+          service_lookup_failed: 'Não foi possível localizar o serviço no banco.',
+          business_lookup_failed: 'Não foi possível localizar o negócio no banco.',
+          service_or_business_not_found: 'O serviço ou o negócio não foi encontrado.',
+          client_lookup_failed: 'Não foi possível consultar o cadastro do cliente.',
+          client_update_failed: 'Não foi possível atualizar o cadastro do cliente.',
+          client_creation_failed: 'Não foi possível criar o cadastro do cliente.',
+          invalid_business_timezone: 'O fuso horário do negócio está inválido.',
+          booking_failed: 'O banco recusou a criação do agendamento.',
+          internal_booking_error: 'O servidor encontrou um erro interno ao criar o agendamento.',
+          invalid_server_response: 'O servidor retornou uma resposta inválida.',
+        }
+        const baseMessage = payload.message || messages[payload.error || ''] || 'Não foi possível concluir o agendamento.'
+        setSaving(false)
+        setBookingError(`${baseMessage}${payload.error ? ` (código: ${payload.error})` : ''}`)
+        return
+      }
+
+      setClientId(payload.clientId ?? null)
+      setClientHasTelegram(payload.hasTelegram ?? false)
+      setStep('done')
+      setSaving(false)
+    } catch (error) {
+      setSaving(false)
+      setBookingError(`Falha de comunicação com o servidor: ${error instanceof Error ? error.message : 'erro desconhecido'}`)
+    }
+'''
+
+          if old not in text:
+              raise SystemExit('Trecho esperado não encontrado; patch não aplicado.')
+
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 'app/book/[slug]/booking-form.tsx'
+          git commit -m "fix: exibir causa real do erro de agendamento"
+          git push
