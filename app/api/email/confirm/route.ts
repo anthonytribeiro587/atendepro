@@ -46,9 +46,10 @@ export async function POST(req: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
+    // Use only columns present in the initial schema. Evolution sends to `phone`.
     const { data: appointment, error: appointmentError } = await supabase
       .from('appointments')
-      .select('id, starts_at, business_id, source, services(name, duration_min), employees(name), clients(name, email, phone, whatsapp_number, telegram_id, viber_user_id)')
+      .select('id, starts_at, business_id, source, services(name, duration_min), employees(name), clients(name, email, phone, telegram_id, viber_id)')
       .eq('id', appointmentId)
       .single()
 
@@ -61,15 +62,12 @@ export async function POST(req: NextRequest) {
       name: string
       email: string | null
       phone: string | null
-      whatsapp_number: string | null
       telegram_id: string | null
-      viber_user_id: string | null
+      viber_id: string | null
     } | null
     const service = appointment.services as unknown as { name: string; duration_min: number } | null
     const employee = appointment.employees as unknown as { name: string } | null
 
-    // Keep this select limited to columns that exist in the initial AtendePRO schema.
-    // WhatsApp Evolution credentials are stored securely in Vercel environment variables.
     const { data: business, error: businessError } = await supabase
       .from('businesses')
       .select('name, address, slug, timezone, telegram_bot_token, telegram_chat_id, viber_bot_token, viber_chat_id')
@@ -131,10 +129,10 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (business.viber_bot_token && client?.viber_user_id) {
+    if (business.viber_bot_token && client?.viber_id) {
       results.viberClient = await sendViberMessage(
         business.viber_bot_token,
-        client.viber_user_id,
+        client.viber_id,
         tplConfirmClient({
           clientName: client.name,
           serviceName: service?.name ?? 'Serviço',
@@ -146,12 +144,11 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const whatsapp = client?.whatsapp_number || client?.phone
-    if (whatsapp) {
+    if (client?.phone) {
       results.whatsapp = await sendWhatsAppMessage(
-        whatsapp,
+        client.phone,
         waTplBookingConfirmation({
-          clientName: client?.name ?? 'Cliente',
+          clientName: client.name,
           serviceName: service?.name ?? 'Serviço',
           date,
           time,
