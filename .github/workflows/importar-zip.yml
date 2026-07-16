@@ -1,0 +1,62 @@
+name: Importar ZIP do AtendePRO
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  importar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Localizar ZIP do AtendePRO
+        id: localizar
+        shell: bash
+        run: |
+          ARQUIVO="$(find . -maxdepth 1 -type f -iname 'AtendePRO*.zip' -print -quit)"
+          if [ -n "$ARQUIVO" ]; then
+            echo "encontrado=true" >> "$GITHUB_OUTPUT"
+            echo "arquivo=$ARQUIVO" >> "$GITHUB_OUTPUT"
+          else
+            echo "encontrado=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Extrair código-fonte
+        if: steps.localizar.outputs.encontrado == 'true'
+        shell: bash
+        run: |
+          rm -rf .atendepro-import
+          mkdir -p .atendepro-import
+          unzip -q "${{ steps.localizar.outputs.arquivo }}" -d .atendepro-import
+
+          PASTA_FONTE="$(find .atendepro-import -mindepth 1 -maxdepth 1 -type d -print -quit)"
+          if [ -z "$PASTA_FONTE" ]; then
+            echo "Não foi encontrada a pasta do projeto dentro do ZIP."
+            exit 1
+          fi
+
+          rsync -a "$PASTA_FONTE"/ ./
+          rm -rf .atendepro-import "${{ steps.localizar.outputs.arquivo }}"
+
+      - name: Salvar arquivos no GitHub
+        if: steps.localizar.outputs.encontrado == 'true'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteração encontrada."
+            exit 0
+          fi
+
+          git commit -m "feat: importar versão inicial do AtendePRO"
+          git push
