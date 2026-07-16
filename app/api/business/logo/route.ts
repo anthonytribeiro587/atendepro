@@ -33,7 +33,9 @@ async function context() {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!supabaseUrl || !serviceRoleKey) throw new Error('Credenciais do Supabase não configuradas.')
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error('Credenciais do Supabase não configuradas.')
+  }
 
   const admin = createAdminClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -53,21 +55,6 @@ async function context() {
   return { admin, business }
 }
 
-async function ensureBucket(admin: ReturnType<typeof createAdminClient>) {
-  const { data } = await admin.storage.getBucket(BUCKET)
-  if (data) return
-
-  const { error: createError } = await admin.storage.createBucket(BUCKET, {
-    public: true,
-    fileSizeLimit: MAX_SIZE,
-    allowedMimeTypes: Object.keys(ALLOWED_TYPES),
-  })
-
-  if (createError && !/already exists|duplicate/i.test(createError.message)) {
-    throw new Error(`Não foi possível preparar o armazenamento: ${createError.message}`)
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     const ctx = await context()
@@ -82,10 +69,35 @@ export async function POST(request: NextRequest) {
     if (uploaded.size <= 0) return error('O arquivo está vazio.')
     if (uploaded.size > MAX_SIZE) return error('A imagem deve ter no máximo 2 MB.')
 
-    await ensureBucket(ctx.admin)
+    // Mantido dentro da própria rota para evitar conflito entre os genéricos
+    // do cliente tipado do projeto e do cliente administrativo do Supabase.
+    const { data: existingBucket, error: bucketLookupError } =
+      await ctx.admin.storage.getBucket(BUCKET)
+
+    if (bucketLookupError && !/not found|does not exist/i.test(bucketLookupError.message)) {
+      throw new Error(`Não foi possível verificar o armazenamento: ${bucketLookupError.message}`)
+    }
+
+    if (!existingBucket) {
+      const { error: createBucketError } = await ctx.admin.storage.createBucket(BUCKET, {
+        public: true,
+        fileSizeLimit: MAX_SIZE,
+        allowedMimeTypes: Object.keys(ALLOWED_TYPES),
+      })
+
+      if (
+        createBucketError &&
+        !/already exists|duplicate/i.test(createBucketError.message)
+      ) {
+        throw new Error(
+          `Não foi possível preparar o armazenamento: ${createBucketError.message}`
+        )
+      }
+    }
 
     const path = `${ctx.business.id}/logo-${randomUUID()}.${extension}`
     const bytes = Buffer.from(await uploaded.arrayBuffer())
+
     const { error: uploadError } = await ctx.admin.storage
       .from(BUCKET)
       .upload(path, bytes, {
@@ -94,7 +106,9 @@ export async function POST(request: NextRequest) {
         upsert: false,
       })
 
-    if (uploadError) return error(`Não foi possível enviar o logo: ${uploadError.message}`, 500)
+    if (uploadError) {
+      return error(`Não foi possível enviar o logo: ${uploadError.message}`, 500)
+    }
 
     const { data: publicData } = ctx.admin.storage.from(BUCKET).getPublicUrl(path)
     const publicUrl = publicData.publicUrl
@@ -106,7 +120,10 @@ export async function POST(request: NextRequest) {
 
     if (updateError) {
       await ctx.admin.storage.from(BUCKET).remove([path])
-      return error(`O logo foi enviado, mas não pôde ser salvo: ${updateError.message}`, 500)
+      return error(
+        `O logo foi enviado, mas não pôde ser salvo: ${updateError.message}`,
+        500
+      )
     }
 
     const oldPath = extractStoragePath(ctx.business.logo_url)
@@ -117,7 +134,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ logo_url: publicUrl })
   } catch (caught) {
     console.error('[business/logo] upload:', caught)
-    return error(caught instanceof Error ? caught.message : 'Erro interno ao enviar o logo.', 500)
+    return error(
+      caught instanceof Error ? caught.message : 'Erro interno ao enviar o logo.',
+      500
+    )
   }
 }
 
@@ -141,6 +161,9 @@ export async function DELETE() {
     return NextResponse.json({ ok: true })
   } catch (caught) {
     console.error('[business/logo] remove:', caught)
-    return error(caught instanceof Error ? caught.message : 'Erro interno ao remover o logo.', 500)
+    return error(
+      caught instanceof Error ? caught.message : 'Erro interno ao remover o logo.',
+      500
+    )
   }
 }
