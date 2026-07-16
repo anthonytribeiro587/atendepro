@@ -1,0 +1,138 @@
+name: Gerar SQL completo do Supabase
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/gerar-banco-completo.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Gerar arquivo SQL único
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          base = Path('supabase/migrations')
+          files = sorted(base.glob('*.sql'))
+          files = [f for f in files if f.name != '007_cron_jobs.sql']
+          out = Path('supabase/ATENDEPRO_BANCO_COMPLETO.sql')
+
+          header = '''-- ================================================================
+          -- AtendePRO - Configuração completa do banco Supabase
+          -- Versão: 0.1.0
+          -- Uso: projeto Supabase NOVO e vazio
+          --
+          -- Execute uma única vez no Supabase:
+          -- SQL Editor -> New query -> cole o conteúdo -> Run
+          --
+          -- Inclui tabelas, relacionamentos, índices, funções, triggers,
+          -- RLS, políticas e o bucket público de imagens de produtos.
+          -- O pg_cron ficou fora porque depende da URL final da Vercel
+          -- e do CRON_SECRET.
+          -- ================================================================
+
+          BEGIN;
+          '''
+
+          parts = [header]
+          for f in files:
+              text = f.read_text(encoding='utf-8')
+
+              if f.name == '005_security_fixes.sql':
+                  marker = '-- ============================================================\n-- Cleanup:'
+                  if marker in text:
+                      text = text.split(marker)[0].rstrip() + '\n'
+
+              parts.append(
+                  f"\n-- ================================================================\n"
+                  f"-- {f.name}\n"
+                  f"-- ================================================================\n\n"
+                  f"{text.strip()}\n"
+              )
+
+          parts.append('''
+
+          -- Padrões brasileiros do AtendePRO
+          ALTER TABLE public.businesses
+            ALTER COLUMN timezone SET DEFAULT 'America/Sao_Paulo';
+
+          ALTER TABLE public.businesses
+            ALTER COLUMN currency SET DEFAULT 'BRL';
+
+          -- Bucket público para fotos dos produtos
+          INSERT INTO storage.buckets (
+            id,
+            name,
+            public,
+            file_size_limit,
+            allowed_mime_types
+          )
+          VALUES (
+            'inventory',
+            'inventory',
+            true,
+            2097152,
+            ARRAY['image/jpeg', 'image/png', 'image/webp']
+          )
+          ON CONFLICT (id) DO UPDATE SET
+            public = EXCLUDED.public,
+            file_size_limit = EXCLUDED.file_size_limit,
+            allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+          COMMIT;
+
+          -- Verificação rápida: deve listar as tabelas principais
+          SELECT table_name
+          FROM information_schema.tables
+          WHERE table_schema = 'public'
+            AND table_name IN (
+              'businesses',
+              'employees',
+              'services',
+              'clients',
+              'appointments',
+              'transactions',
+              'inventory_items',
+              'inventory_movements',
+              'notification_log',
+              'business_hours'
+            )
+          ORDER BY table_name;
+          ''')
+
+          content = '\n'.join(parts)
+          content = '\n'.join(
+              line[10:] if line.startswith('          ') else line
+              for line in content.splitlines()
+          ) + '\n'
+
+          out.write_text(content, encoding='utf-8')
+          print(f'Gerado: {out} ({out.stat().st_size} bytes)')
+          PY
+
+      - name: Salvar SQL completo
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add supabase/ATENDEPRO_BANCO_COMPLETO.sql
+
+          if git diff --cached --quiet; then
+            echo "O SQL completo já está atualizado."
+            exit 0
+          fi
+
+          git commit -m "feat: adicionar SQL completo do Supabase"
+          git push
