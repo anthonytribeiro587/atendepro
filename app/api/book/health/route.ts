@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
         .limit(1),
       supabase
         .from('clients')
-        .select('id, name, phone, email, telegram_id, viber_id')
+        .select('id, name, phone, email, telegram_id')
         .eq('business_id', businessId)
         .limit(1),
       supabase
