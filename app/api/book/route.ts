@@ -8,7 +8,6 @@ import { z } from 'zod'
 import DOMPurify from 'isomorphic-dompurify'
 import { createServiceClient } from '@/lib/supabase/service'
 import { rateLimit, getIp } from '@/lib/rate-limit'
-import { normalizeWhatsAppNumber } from '@/lib/whatsapp'
 
 function sanitize(s: string): string {
   return DOMPurify.sanitize(s, { ALLOWED_TAGS: [] }).trim()
@@ -83,7 +82,6 @@ export async function POST(req: NextRequest) {
     const name = sanitize(parsed.data.name)
     const email = parsed.data.email?.trim().toLowerCase() || null
     const rawPhone = parsed.data.phone?.trim() || null
-    const whatsappNumber = rawPhone ? normalizeWhatsAppNumber(rawPhone) : null
 
     if (!name) return errorResponse('invalid_name', 422)
     if (!rawPhone && !email) {
@@ -109,11 +107,11 @@ export async function POST(req: NextRequest) {
 
     if (serviceResult.error) {
       console.error('[api/book] service lookup:', serviceResult.error.message)
-      return errorResponse('service_lookup_failed')
+      return errorResponse('service_lookup_failed', 500, serviceResult.error.message)
     }
     if (businessResult.error) {
       console.error('[api/book] business lookup:', businessResult.error.message)
-      return errorResponse('business_lookup_failed')
+      return errorResponse('business_lookup_failed', 500, businessResult.error.message)
     }
     if (!serviceResult.data || !businessResult.data) {
       return errorResponse('service_or_business_not_found', 404)
@@ -122,28 +120,28 @@ export async function POST(req: NextRequest) {
     const service = serviceResult.data
     const business = businessResult.data
 
-    // Locate an existing client without using a raw PostgREST OR expression.
+    // Use only columns guaranteed by the initial schema. WhatsApp delivery uses
+    // the existing `phone` field, so no optional migration is required here.
     let existing: {
       id: string
       name: string
       email: string | null
       phone: string | null
-      whatsapp_number: string | null
       telegram_id: string | null
-      viber_user_id: string | null
+      viber_id: string | null
     } | null = null
 
     if (rawPhone) {
       const phoneLookup = await supabase
         .from('clients')
-        .select('id, name, email, phone, whatsapp_number, telegram_id, viber_user_id')
+        .select('id, name, email, phone, telegram_id, viber_id')
         .eq('business_id', businessId)
         .eq('phone', rawPhone)
         .maybeSingle()
 
       if (phoneLookup.error) {
         console.error('[api/book] phone lookup:', phoneLookup.error.message)
-        return errorResponse('client_lookup_failed')
+        return errorResponse('client_lookup_failed', 500, phoneLookup.error.message)
       }
       existing = phoneLookup.data
     }
@@ -151,7 +149,7 @@ export async function POST(req: NextRequest) {
     if (!existing && email) {
       const emailLookup = await supabase
         .from('clients')
-        .select('id, name, email, phone, whatsapp_number, telegram_id, viber_user_id')
+        .select('id, name, email, phone, telegram_id, viber_id')
         .eq('business_id', businessId)
         .ilike('email', email)
         .limit(1)
@@ -159,7 +157,7 @@ export async function POST(req: NextRequest) {
 
       if (emailLookup.error) {
         console.error('[api/book] email lookup:', emailLookup.error.message)
-        return errorResponse('client_lookup_failed')
+        return errorResponse('client_lookup_failed', 500, emailLookup.error.message)
       }
       existing = emailLookup.data
     }
@@ -171,7 +169,7 @@ export async function POST(req: NextRequest) {
     if (existing) {
       clientId = existing.id
       hasTelegram = Boolean(existing.telegram_id)
-      hasViber = Boolean(existing.viber_user_id)
+      hasViber = Boolean(existing.viber_id)
 
       const { error: clientUpdateError } = await supabase
         .from('clients')
@@ -179,14 +177,13 @@ export async function POST(req: NextRequest) {
           name,
           email: email ?? existing.email,
           phone: rawPhone ?? existing.phone,
-          whatsapp_number: whatsappNumber ?? existing.whatsapp_number,
         })
         .eq('id', existing.id)
         .eq('business_id', businessId)
 
       if (clientUpdateError) {
         console.error('[api/book] client update:', clientUpdateError.message)
-        return errorResponse('client_update_failed')
+        return errorResponse('client_update_failed', 500, clientUpdateError.message)
       }
     } else {
       const { data: newClient, error: insertError } = await supabase
@@ -195,7 +192,6 @@ export async function POST(req: NextRequest) {
           business_id: businessId,
           name,
           phone: rawPhone,
-          whatsapp_number: whatsappNumber,
           email,
         })
         .select('id')
@@ -206,7 +202,7 @@ export async function POST(req: NextRequest) {
         return errorResponse(
           'client_creation_failed',
           insertError?.code === '23505' ? 409 : 500,
-          insertError?.code === '23505' ? 'Este telefone já está cadastrado. Atualize a página e tente novamente.' : undefined
+          insertError?.message || 'Não foi possível cadastrar o cliente.'
         )
       }
       clientId = newClient.id
@@ -218,7 +214,7 @@ export async function POST(req: NextRequest) {
       startsAt = parseDateTimeInTz(date, time, timezone)
     } catch (error) {
       console.error('[api/book] invalid timezone:', timezone, error)
-      return errorResponse('invalid_business_timezone')
+      return errorResponse('invalid_business_timezone', 500, `Fuso horário inválido: ${timezone}`)
     }
     const endsAt = new Date(startsAt.getTime() + Number(service.duration_min || 60) * 60_000)
 
@@ -243,11 +239,10 @@ export async function POST(req: NextRequest) {
         return errorResponse('slot_taken', 409, 'Este horário acabou de ser ocupado.')
       }
       console.error('[api/book] appointment insert:', appointmentError?.code, appointmentError?.message)
-      return errorResponse('booking_failed')
+      return errorResponse('booking_failed', 500, appointmentError?.message || 'Não foi possível criar o agendamento.')
     }
 
-    // Run notification delivery after the booking exists. A notification failure
-    // never rolls back or hides a successfully created appointment.
+    // A notification failure never rolls back a successfully created booking.
     try {
       const appUrl = (process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin).replace(/\/+$/, '')
       await fetch(`${appUrl}/api/email/confirm`, {
@@ -272,6 +267,10 @@ export async function POST(req: NextRequest) {
     })
   } catch (error) {
     console.error('[api/book] unhandled:', error)
-    return errorResponse('internal_booking_error')
+    return errorResponse(
+      'internal_booking_error',
+      500,
+      error instanceof Error ? error.message : 'Erro interno ao criar o agendamento.'
+    )
   }
 }
