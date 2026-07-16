@@ -1,4 +1,4 @@
-name: Melhorar diagnóstico do agendamento
+name: Atualizar formulário de agendamento público
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Exibir erro real da API no formulário
+      - name: Usar rota isolada e mostrar erro real
         shell: bash
         run: |
           python - <<'PY'
@@ -25,6 +25,8 @@ jobs:
 
           path = Path('app/book/[slug]/booking-form.tsx')
           text = path.read_text(encoding='utf-8')
+
+          text = text.replace("fetch('/api/book', {", "fetch('/api/public-booking', {")
 
           old = '''      if (!res.ok) throw new Error(await res.text())
 
@@ -39,33 +41,19 @@ jobs:
     }
 '''
 
-          new = '''      const payload = await res.json().catch(() => ({ error: 'invalid_server_response' })) as {
+          new = '''      const payload = await res.json().catch(() => ({
+        error: 'invalid_server_response',
+        message: 'O servidor retornou uma resposta inválida.',
+      })) as {
         error?: string
         message?: string
-        details?: Record<string, string[]>
-        appointmentId?: string
         clientId?: string
         hasTelegram?: boolean
       }
 
       if (!res.ok) {
-        const messages: Record<string, string> = {
-          validation_failed: 'Os dados enviados não passaram na validação.',
-          contact_required: 'Informe um telefone ou e-mail para confirmar o agendamento.',
-          service_lookup_failed: 'Não foi possível localizar o serviço no banco.',
-          business_lookup_failed: 'Não foi possível localizar o negócio no banco.',
-          service_or_business_not_found: 'O serviço ou o negócio não foi encontrado.',
-          client_lookup_failed: 'Não foi possível consultar o cadastro do cliente.',
-          client_update_failed: 'Não foi possível atualizar o cadastro do cliente.',
-          client_creation_failed: 'Não foi possível criar o cadastro do cliente.',
-          invalid_business_timezone: 'O fuso horário do negócio está inválido.',
-          booking_failed: 'O banco recusou a criação do agendamento.',
-          internal_booking_error: 'O servidor encontrou um erro interno ao criar o agendamento.',
-          invalid_server_response: 'O servidor retornou uma resposta inválida.',
-        }
-        const baseMessage = payload.message || messages[payload.error || ''] || 'Não foi possível concluir o agendamento.'
         setSaving(false)
-        setBookingError(`${baseMessage}${payload.error ? ` (código: ${payload.error})` : ''}`)
+        setBookingError(`${payload.message || 'Não foi possível concluir o agendamento.'}${payload.error ? ` (código: ${payload.error})` : ''}`)
         return
       }
 
@@ -79,10 +67,12 @@ jobs:
     }
 '''
 
-          if old not in text:
-              raise SystemExit('Trecho esperado não encontrado; patch não aplicado.')
+          if old in text:
+              text = text.replace(old, new)
+          elif '/api/public-booking' not in text:
+              raise SystemExit('Não foi possível localizar o trecho do formulário para atualização.')
 
-          path.write_text(text.replace(old, new), encoding='utf-8')
+          path.write_text(text, encoding='utf-8')
           PY
 
       - name: Commit
@@ -91,5 +81,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add 'app/book/[slug]/booking-form.tsx'
-          git commit -m "fix: exibir causa real do erro de agendamento"
+
+          if git diff --cached --quiet; then
+            echo "O formulário já estava atualizado."
+            exit 0
+          fi
+
+          git commit -m "fix: usar rota isolada no agendamento público"
           git push
