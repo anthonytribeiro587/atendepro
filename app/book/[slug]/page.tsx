@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { createServiceClient } from '@/lib/supabase/service'
 import { notFound } from 'next/navigation'
-import { PublicBookingForm } from './booking-form'
+import { PublicBookingFormV2 } from './booking-form-v2'
 import { getTelegramBotInfo } from '@/lib/telegram'
 import { getViberBotInfo } from '@/lib/viber'
 
@@ -15,14 +15,13 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     .maybeSingle()
 
   return {
-    title: data ? `Book at ${data.name}` : 'Book appointment',
+    title: data ? `Agendar em ${data.name}` : 'Agendar horário',
   }
 }
 
 export default async function PublicBookingPage({ params }: { params: { slug: string } }) {
   const supabase = createServiceClient()
 
-  // Public data — brand_color included for warm/premium design
   const { data: business } = await supabase
     .from('businesses')
     .select('id, name, type, phone, logo_url, currency, slug, timezone, address, brand_color')
@@ -31,7 +30,6 @@ export default async function PublicBookingPage({ params }: { params: { slug: st
 
   if (!business) notFound()
 
-  // Tokens fetched server-side only — never serialised to the client
   const { data: bizTokens } = await supabase
     .from('businesses')
     .select('telegram_bot_token, viber_bot_token')
@@ -70,8 +68,12 @@ export default async function PublicBookingPage({ params }: { params: { slug: st
       : Promise.resolve({ ok: false as const }),
   ])
 
-  const telegramBotUsername = telegramInfo.ok ? (telegramInfo as { ok: true; result: { username: string } }).result?.username ?? null : null
-  const viberBotUri = viberInfo.ok ? (viberInfo as { ok: true; uri?: string }).uri ?? null : null
+  const telegramBotUsername = telegramInfo.ok
+    ? (telegramInfo as { ok: true; result: { username: string } }).result?.username ?? null
+    : null
+  const viberBotUri = viberInfo.ok
+    ? (viberInfo as { ok: true; uri?: string }).uri ?? null
+    : null
 
   const brandColor = business.brand_color || '#2D2926'
 
@@ -82,28 +84,26 @@ export default async function PublicBookingPage({ params }: { params: { slug: st
         '--brand-light': `${brandColor}18`,
       } as React.CSSProperties}
     >
-      {/* Header */}
       <header style={{ background: 'white', borderBottom: '0.5px solid #E8E0D8', padding: '14px 16px' }}>
-        <div style={{ maxWidth: 448, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 12 }}>
           {business.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={business.logo_url} alt={business.name} style={{ width: 38, height: 38, borderRadius: 10, objectFit: 'cover' }} />
+            <img src={business.logo_url} alt={business.name} style={{ width: 42, height: 42, borderRadius: 11, objectFit: 'cover' }} />
           ) : (
-            <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--brand)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 500, fontSize: 16 }}>
+            <div style={{ width: 42, height: 42, borderRadius: 11, background: 'var(--brand)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 17 }}>
               {business.name[0]}
             </div>
           )}
           <div>
-            <div style={{ fontSize: 15, fontWeight: 500, color: '#2D2926' }}>{business.name}</div>
-            <div style={{ fontSize: 12, color: '#9A8E85' }}>Book an appointment</div>
+            <div style={{ fontSize: 16, fontWeight: 600, color: '#2D2926' }}>{business.name}</div>
+            <div style={{ fontSize: 12, color: '#9A8E85' }}>Agendamento online</div>
           </div>
         </div>
       </header>
 
-      {/* Content */}
-      <div style={{ background: '#FBF8F5', minHeight: 'calc(100vh - 67px)', padding: '20px 16px' }}>
-        <div style={{ maxWidth: 448, margin: '0 auto' }}>
-          <PublicBookingForm
+      <main style={{ background: '#FBF8F5', minHeight: 'calc(100vh - 71px)', padding: '24px 16px' }}>
+        <div style={{ maxWidth: 560, margin: '0 auto' }}>
+          <PublicBookingFormV2
             business={business}
             services={services ?? []}
             employees={employees ?? []}
@@ -112,7 +112,7 @@ export default async function PublicBookingPage({ params }: { params: { slug: st
             viberBotUri={viberBotUri}
           />
         </div>
-      </div>
+      </main>
     </div>
   )
 }
