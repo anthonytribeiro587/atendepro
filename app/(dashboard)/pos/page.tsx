@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/layout/header'
 import { POSTerminal } from './pos-terminal'
+import { FinishAppointmentTerminal } from './finish-appointment-terminal'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { History } from 'lucide-react'
@@ -11,6 +12,11 @@ interface SearchParams {
   clientId?: string
   serviceId?: string
   staffId?: string
+}
+
+function firstRelation<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] ?? null
+  return value ?? null
 }
 
 export default async function POSPage({ searchParams }: { searchParams: SearchParams }) {
@@ -46,7 +52,6 @@ export default async function POSPage({ searchParams }: { searchParams: SearchPa
       .limit(200),
   ])
 
-  // ── Booking context: prefill POS from an appointment ──────────────────────
   let bookingContext: {
     bookingId: string
     clientId: string
@@ -58,34 +63,52 @@ export default async function POSPage({ searchParams }: { searchParams: SearchPa
   if (searchParams.bookingId) {
     const { data: appt } = await supabase
       .from('appointments')
-      .select('id, starts_at, clients(name), services(name), employees(id, name)')
+      .select('id, starts_at, client_id, service_id, employee_id, clients(name), services(name), employees(id, name)')
       .eq('id', searchParams.bookingId)
-      .eq('business_id', business.id) // security: only own business
+      .eq('business_id', business.id)
       .maybeSingle()
 
     if (appt) {
-      const clientName = (appt.clients as { name: string } | null)?.name ?? 'Walk-in'
-      const serviceName = (appt.services as { name: string } | null)?.name ?? ''
-      const tz = business.timezone ?? 'UTC'
+      const client = firstRelation(appt.clients as { name: string } | { name: string }[] | null)
+      const service = firstRelation(appt.services as { name: string } | { name: string }[] | null)
+      const employee = firstRelation(appt.employees as { id: string; name: string } | { id: string; name: string }[] | null)
+      const tz = business.timezone ?? 'America/Sao_Paulo'
+
       bookingContext = {
         bookingId: appt.id,
-        clientId: searchParams.clientId ?? '',
-        serviceId: searchParams.serviceId ?? '',
-        staffId: searchParams.staffId ?? (appt.employees as { id: string; name: string } | null)?.id ?? '',
-        label: `${clientName} — ${serviceName} — ${formatInBusinessTimezone(appt.starts_at, tz, 'time')}`,
+        clientId: searchParams.clientId ?? appt.client_id ?? '',
+        serviceId: searchParams.serviceId ?? appt.service_id ?? '',
+        staffId: searchParams.staffId ?? appt.employee_id ?? employee?.id ?? '',
+        label: `${client?.name ?? 'Cliente'} — ${service?.name ?? 'Atendimento'} — ${formatInBusinessTimezone(appt.starts_at, tz, 'time')}`,
       }
     }
   }
 
   const t = await getTranslations('pos')
 
+  if (bookingContext) {
+    return (
+      <>
+        <Header title="Finalizar atendimento" />
+        <FinishAppointmentTerminal
+          businessId={business.id}
+          currency={business.currency}
+          services={services ?? []}
+          employees={employees ?? []}
+          clients={clients ?? []}
+          bookingContext={bookingContext}
+        />
+      </>
+    )
+  }
+
   return (
     <>
       <Header
         title={t('title')}
         actions={
-          <Link href="/pos/history" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors">
-            <History className="w-4 h-4" /> Sales history
+          <Link href="/pos/history" className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700">
+            <History className="h-4 w-4" /> Histórico de vendas
           </Link>
         }
       />
@@ -95,7 +118,6 @@ export default async function POSPage({ searchParams }: { searchParams: SearchPa
         services={services ?? []}
         employees={employees ?? []}
         clients={clients ?? []}
-        bookingContext={bookingContext}
       />
     </>
   )

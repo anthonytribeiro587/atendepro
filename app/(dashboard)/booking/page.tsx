@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/layout/header'
+import { AppointmentModalEnhancer } from '@/components/appointment-modal-enhancer'
 import { BookingCalendar } from './booking-calendar'
 
 export default async function BookingPage() {
@@ -53,7 +54,7 @@ export default async function BookingPage() {
 
   return (
     <>
-      <Header title="Booking" />
+      <Header title="Agendamentos" />
       <BookingCalendar
         businessId={business.id}
         slug={business.slug}
@@ -64,6 +65,7 @@ export default async function BookingPage() {
         clients={clients ?? []}
         businessHours={businessHours ?? []}
       />
+      <AppointmentModalEnhancer />
     </>
   )
 }
