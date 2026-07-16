@@ -3,7 +3,6 @@ import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { sendBookingConfirmation, formatEmailDate, formatEmailTime } from '@/lib/email'
 import { buildGCalUrlFromISO } from '@/lib/gcal'
 import { sendTelegramMessage, tplNewBooking } from '@/lib/telegram'
-import { sendViberMessage, tplNewBooking as viberTplNewBooking } from '@/lib/viber'
 import { sendWhatsAppMessage, tplBookingConfirmation as waTplBookingConfirmation } from '@/lib/whatsapp'
 
 function tplConfirmClient(opts: {
@@ -46,10 +45,9 @@ export async function POST(req: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // Use only columns present in the initial schema. Evolution sends to `phone`.
     const { data: appointment, error: appointmentError } = await supabase
       .from('appointments')
-      .select('id, starts_at, business_id, source, services(name, duration_min), employees(name), clients(name, email, phone, telegram_id, viber_id)')
+      .select('id, starts_at, business_id, source, services(name, duration_min), employees(name), clients(name, email, phone, telegram_id)')
       .eq('id', appointmentId)
       .single()
 
@@ -63,14 +61,13 @@ export async function POST(req: NextRequest) {
       email: string | null
       phone: string | null
       telegram_id: string | null
-      viber_id: string | null
     } | null
     const service = appointment.services as unknown as { name: string; duration_min: number } | null
     const employee = appointment.employees as unknown as { name: string } | null
 
     const { data: business, error: businessError } = await supabase
       .from('businesses')
-      .select('name, address, slug, timezone, telegram_bot_token, telegram_chat_id, viber_bot_token, viber_chat_id')
+      .select('name, address, slug, timezone, telegram_bot_token, telegram_chat_id')
       .eq('id', appointment.business_id)
       .single()
 
@@ -103,36 +100,6 @@ export async function POST(req: NextRequest) {
       results.telegramClient = await sendTelegramMessage(
         business.telegram_bot_token,
         client.telegram_id,
-        tplConfirmClient({
-          clientName: client.name,
-          serviceName: service?.name ?? 'Serviço',
-          date,
-          time,
-          businessName: business.name,
-          address: business.address ?? undefined,
-        })
-      )
-    }
-
-    if (business.viber_bot_token && business.viber_chat_id) {
-      results.viberOwner = await sendViberMessage(
-        business.viber_bot_token,
-        business.viber_chat_id,
-        viberTplNewBooking({
-          clientName: client?.name ?? 'Cliente',
-          serviceName: service?.name ?? 'Serviço',
-          date,
-          time,
-          employeeName: employee?.name,
-          source: appointment.source ?? undefined,
-        })
-      )
-    }
-
-    if (business.viber_bot_token && client?.viber_id) {
-      results.viberClient = await sendViberMessage(
-        business.viber_bot_token,
-        client.viber_id,
         tplConfirmClient({
           clientName: client.name,
           serviceName: service?.name ?? 'Serviço',
