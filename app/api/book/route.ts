@@ -1,7 +1,6 @@
 /**
  * POST /api/book
- * Server-side booking submission with Zod validation and rate limiting.
- * Replaces direct Supabase client calls from booking-form.tsx.
+ * Public booking endpoint with server-side validation and service-role writes.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -9,199 +8,270 @@ import { z } from 'zod'
 import DOMPurify from 'isomorphic-dompurify'
 import { createServiceClient } from '@/lib/supabase/service'
 import { rateLimit, getIp } from '@/lib/rate-limit'
+import { normalizeWhatsAppNumber } from '@/lib/whatsapp'
 
 function sanitize(s: string): string {
   return DOMPurify.sanitize(s, { ALLOWED_TAGS: [] }).trim()
 }
 
-/** Convert a wall-clock date+time (e.g. "2024-03-15", "14:30") in a named IANA timezone to a UTC Date. */
+/** Convert a wall-clock date+time in an IANA timezone to UTC. */
 function parseDateTimeInTz(date: string, time: string, timezone: string): Date {
   const [year, month, day] = date.split('-').map(Number)
   const [hour, minute] = time.split(':').map(Number)
-  // Use noon UTC on the same date as a stable reference to determine the TZ offset,
-  // avoiding DST edge cases that only happen near midnight.
   const noonUtc = new Date(Date.UTC(year, month - 1, day, 12, 0))
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,
-    year: 'numeric', month: 'numeric', day: 'numeric',
-    hour: 'numeric', minute: 'numeric', second: 'numeric',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
     hour12: false,
   }).formatToParts(noonUtc)
   const get = (type: string) => parseInt(parts.find((p) => p.type === type)?.value ?? '0')
-  const localNoonMs = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour') % 24, get('minute'), get('second'))
+  const localNoonMs = Date.UTC(
+    get('year'),
+    get('month') - 1,
+    get('day'),
+    get('hour') % 24,
+    get('minute'),
+    get('second')
+  )
   const offsetMs = localNoonMs - noonUtc.getTime()
-  // wall_clock = UTC + offset  →  UTC = wall_clock - offset
   return new Date(Date.UTC(year, month - 1, day, hour, minute) - offsetMs)
 }
 
 const BookingSchema = z.object({
   businessId: z.string().uuid(),
-  serviceId:  z.string().uuid(),
+  serviceId: z.string().uuid(),
   employeeId: z.string().uuid().nullable().optional(),
-  date:       z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
-  time:       z.string().regex(/^\d{2}:\d{2}$/, 'Invalid time format'),
-  name:       z.string().min(1).max(100),
-  phone:      z.string().max(30).optional().nullable(),
-  email:      z.string().email().optional().nullable().or(z.literal('')),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
+  time: z.string().regex(/^\d{2}:\d{2}$/, 'Invalid time format'),
+  name: z.string().min(1).max(100),
+  phone: z.string().max(30).optional().nullable(),
+  email: z.string().email().optional().nullable().or(z.literal('')),
 })
 
+function errorResponse(error: string, status = 500, message?: string) {
+  return NextResponse.json({ error, ...(message ? { message } : {}) }, { status })
+}
+
 export async function POST(req: NextRequest) {
-  // Rate limit: 5 booking attempts per IP per 10 minutes
-  const ip = getIp(req)
-  if (!rateLimit(ip, { limit: 20, windowMs: 10 * 60 * 1000 })) {
-    return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
-  }
-
-  // Parse + validate input
-  let body: unknown
   try {
-    body = await req.json()
-  } catch {
-    return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
-  }
+    const ip = getIp(req)
+    if (!rateLimit(ip, { limit: 20, windowMs: 10 * 60 * 1000 })) {
+      return errorResponse('rate_limited', 429)
+    }
 
-  const parsed = BookingSchema.safeParse(body)
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'validation_failed', details: parsed.error.flatten().fieldErrors },
-      { status: 422 }
-    )
-  }
+    let body: unknown
+    try {
+      body = await req.json()
+    } catch {
+      return errorResponse('invalid_json', 400)
+    }
 
-  const { businessId, serviceId, employeeId, date, time, phone, email } = parsed.data
-  const name = sanitize(parsed.data.name)
+    const parsed = BookingSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'validation_failed', details: parsed.error.flatten().fieldErrors },
+        { status: 422 }
+      )
+    }
 
-  if (!phone && !email) {
-    return NextResponse.json(
-      { error: 'contact_required', message: 'At least a phone number or email is required' },
-      { status: 400 }
-    )
-  }
+    const { businessId, serviceId, employeeId, date, time } = parsed.data
+    const name = sanitize(parsed.data.name)
+    const email = parsed.data.email?.trim().toLowerCase() || null
+    const rawPhone = parsed.data.phone?.trim() || null
+    const whatsappNumber = rawPhone ? normalizeWhatsAppNumber(rawPhone) : null
 
-  const supabase = createServiceClient()
+    if (!name) return errorResponse('invalid_name', 422)
+    if (!rawPhone && !email) {
+      return errorResponse('contact_required', 400, 'Informe telefone ou e-mail.')
+    }
 
-  // Verify the business exists and the service belongs to it; also fetch timezone
-  const [{ data: service }, { data: biz }] = await Promise.all([
-    supabase
-      .from('services')
-      .select('id, duration_min, price')
-      .eq('id', serviceId)
-      .eq('business_id', businessId)
-      .eq('is_active', true)
-      .maybeSingle(),
-    supabase
-      .from('businesses')
-      .select('timezone')
-      .eq('id', businessId)
-      .maybeSingle(),
-  ])
+    const supabase = createServiceClient()
 
-  if (!service) {
-    return NextResponse.json({ error: 'service_not_found' }, { status: 404 })
-  }
+    const [serviceResult, businessResult] = await Promise.all([
+      supabase
+        .from('services')
+        .select('id, name, duration_min, price')
+        .eq('id', serviceId)
+        .eq('business_id', businessId)
+        .eq('is_active', true)
+        .maybeSingle(),
+      supabase
+        .from('businesses')
+        .select('id, name, timezone')
+        .eq('id', businessId)
+        .maybeSingle(),
+    ])
 
-  const timezone = biz?.timezone ?? 'UTC'
+    if (serviceResult.error) {
+      console.error('[api/book] service lookup:', serviceResult.error.message)
+      return errorResponse('service_lookup_failed')
+    }
+    if (businessResult.error) {
+      console.error('[api/book] business lookup:', businessResult.error.message)
+      return errorResponse('business_lookup_failed')
+    }
+    if (!serviceResult.data || !businessResult.data) {
+      return errorResponse('service_or_business_not_found', 404)
+    }
 
-  // Upsert client
-  let clientId: string | null = null
-  let hasTelegram = false
-  let hasViber = false
-  if (phone || email) {
-    // BUG-8: search by all provided fields combined — avoids duplicate clients when
-    // both phone and email are submitted but each matches a different existing record.
-    const orParts: string[] = []
-    if (phone) orParts.push(`phone.eq.${phone}`)
-    if (email) orParts.push(`email.eq.${email}`)
+    const service = serviceResult.data
+    const business = businessResult.data
 
-    const { data: matches } = await supabase
-      .from('clients')
-      .select('id, name, email, telegram_id, viber_user_id')
-      .eq('business_id', businessId)
-      .or(orParts.join(','))
-      .limit(1)
+    // Locate an existing client without using a raw PostgREST OR expression.
+    let existing: {
+      id: string
+      name: string
+      email: string | null
+      phone: string | null
+      whatsapp_number: string | null
+      telegram_id: string | null
+      viber_user_id: string | null
+    } | null = null
 
-    const existing = matches?.[0] ?? null
+    if (rawPhone) {
+      const phoneLookup = await supabase
+        .from('clients')
+        .select('id, name, email, phone, whatsapp_number, telegram_id, viber_user_id')
+        .eq('business_id', businessId)
+        .eq('phone', rawPhone)
+        .maybeSingle()
+
+      if (phoneLookup.error) {
+        console.error('[api/book] phone lookup:', phoneLookup.error.message)
+        return errorResponse('client_lookup_failed')
+      }
+      existing = phoneLookup.data
+    }
+
+    if (!existing && email) {
+      const emailLookup = await supabase
+        .from('clients')
+        .select('id, name, email, phone, whatsapp_number, telegram_id, viber_user_id')
+        .eq('business_id', businessId)
+        .ilike('email', email)
+        .limit(1)
+        .maybeSingle()
+
+      if (emailLookup.error) {
+        console.error('[api/book] email lookup:', emailLookup.error.message)
+        return errorResponse('client_lookup_failed')
+      }
+      existing = emailLookup.data
+    }
+
+    let clientId: string
+    let hasTelegram = false
+    let hasViber = false
 
     if (existing) {
       clientId = existing.id
-      hasTelegram = !!existing.telegram_id
-      hasViber = !!existing.viber_user_id
-      // BUG-10: update both name and email if different from stored value
-      const updates: { name?: string; email?: string } = {}
-      if (name && name !== existing.name) updates.name = name
-      if (email && email !== existing.email) updates.email = email
-      if (Object.keys(updates).length > 0) {
-        await supabase.from('clients').update(updates).eq('id', existing.id)
+      hasTelegram = Boolean(existing.telegram_id)
+      hasViber = Boolean(existing.viber_user_id)
+
+      const { error: clientUpdateError } = await supabase
+        .from('clients')
+        .update({
+          name,
+          email: email ?? existing.email,
+          phone: rawPhone ?? existing.phone,
+          whatsapp_number: whatsappNumber ?? existing.whatsapp_number,
+        })
+        .eq('id', existing.id)
+        .eq('business_id', businessId)
+
+      if (clientUpdateError) {
+        console.error('[api/book] client update:', clientUpdateError.message)
+        return errorResponse('client_update_failed')
       }
     } else {
-      // BUG-9: fail fast if client creation fails — never book without a valid clientId
-      const { data: newClient, error: insertErr } = await supabase
+      const { data: newClient, error: insertError } = await supabase
         .from('clients')
         .insert({
           business_id: businessId,
           name,
-          phone: phone || null,
-          email: email || null,
+          phone: rawPhone,
+          whatsapp_number: whatsappNumber,
+          email,
         })
         .select('id')
         .single()
-      if (insertErr || !newClient) {
-        console.error('[api/book] client insert error:', insertErr?.message)
-        return NextResponse.json({ error: 'client_creation_failed' }, { status: 500 })
+
+      if (insertError || !newClient) {
+        console.error('[api/book] client insert:', insertError?.code, insertError?.message)
+        return errorResponse(
+          'client_creation_failed',
+          insertError?.code === '23505' ? 409 : 500,
+          insertError?.code === '23505' ? 'Este telefone já está cadastrado. Atualize a página e tente novamente.' : undefined
+        )
       }
       clientId = newClient.id
     }
-  }
 
-  // Create appointment — parse wall-clock time in the business timezone
-  const startsAt = parseDateTimeInTz(date, time, timezone)
-  const endsAt   = new Date(startsAt.getTime() + service.duration_min * 60_000)
+    const timezone = business.timezone || 'America/Sao_Paulo'
+    let startsAt: Date
+    try {
+      startsAt = parseDateTimeInTz(date, time, timezone)
+    } catch (error) {
+      console.error('[api/book] invalid timezone:', timezone, error)
+      return errorResponse('invalid_business_timezone')
+    }
+    const endsAt = new Date(startsAt.getTime() + Number(service.duration_min || 60) * 60_000)
 
-  const { data: appt, error: apptErr } = await supabase
-    .from('appointments')
-    .insert({
-      business_id: businessId,
-      client_id:   clientId,
-      employee_id: employeeId ?? null,
-      service_id:  serviceId,
-      starts_at:   startsAt.toISOString(),
-      ends_at:     endsAt.toISOString(),
-      price:       service.price,
-      status:      'confirmed',
-      source:      'online',
+    const { data: appointment, error: appointmentError } = await supabase
+      .from('appointments')
+      .insert({
+        business_id: businessId,
+        client_id: clientId,
+        employee_id: employeeId ?? null,
+        service_id: serviceId,
+        starts_at: startsAt.toISOString(),
+        ends_at: endsAt.toISOString(),
+        price: service.price,
+        status: 'confirmed',
+        source: 'online',
+      })
+      .select('id')
+      .single()
+
+    if (appointmentError || !appointment) {
+      if (appointmentError?.message?.includes('slot_already_booked')) {
+        return errorResponse('slot_taken', 409, 'Este horário acabou de ser ocupado.')
+      }
+      console.error('[api/book] appointment insert:', appointmentError?.code, appointmentError?.message)
+      return errorResponse('booking_failed')
+    }
+
+    // Run notification delivery after the booking exists. A notification failure
+    // never rolls back or hides a successfully created appointment.
+    try {
+      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin).replace(/\/+$/, '')
+      await fetch(`${appUrl}/api/email/confirm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.INTERNAL_API_SECRET ?? ''}`,
+        },
+        body: JSON.stringify({ appointmentId: appointment.id, formEmail: email }),
+        signal: AbortSignal.timeout(8000),
+        cache: 'no-store',
+      })
+    } catch (notificationError) {
+      console.error('[api/book] notification delivery:', notificationError)
+    }
+
+    return NextResponse.json({
+      appointmentId: appointment.id,
+      clientId,
+      hasTelegram,
+      hasViber,
     })
-    .select('id')
-    .single()
-
-  if (apptErr || !appt) {
-    // Trigger 017: the DB raises 'slot_already_booked' when a concurrent
-    // request wins the race for the same slot.
-    if (apptErr?.message?.includes('slot_already_booked')) {
-      return NextResponse.json(
-        { error: 'slot_taken', message: 'This time slot was just taken. Please choose another time.' },
-        { status: 409 }
-      )
-    }
-    console.error('[api/book] insert error:', apptErr?.message)
-    return NextResponse.json({ error: 'booking_failed' }, { status: 500 })
+  } catch (error) {
+    console.error('[api/book] unhandled:', error)
+    return errorResponse('internal_booking_error')
   }
-
-  // Trigger notifications (fire-and-forget — non-blocking)
-  fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/api/email/confirm`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.INTERNAL_API_SECRET ?? ''}`,
-    },
-    body: JSON.stringify({ appointmentId: appt.id, formEmail: email || null }),
-  }).then(async (res) => {
-    if (!res.ok) {
-      const text = await res.text().catch(() => '')
-      console.error('[api/book] email/confirm failed:', res.status, text)
-    }
-  }).catch((err) => {
-    console.error('[api/book] email/confirm fetch error:', err)
-  })
-
-  return NextResponse.json({ appointmentId: appt.id, clientId, hasTelegram, hasViber })
 }
