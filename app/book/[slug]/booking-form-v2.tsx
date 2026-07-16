@@ -114,6 +114,9 @@ export function PublicBookingFormV2({ business, services, employees, workingHour
       return
     }
 
+    // Capture primitive values after the null guard. TypeScript does not
+    // preserve object narrowing inside the nested async function.
+    const serviceDuration = service.duration_min
     let cancelled = false
 
     async function loadSlots() {
@@ -130,7 +133,7 @@ export function PublicBookingFormV2({ business, services, employees, workingHour
           return
         }
 
-        let slots = generateSlots(hours.open_time, hours.close_time, service.duration_min)
+        let slots = generateSlots(hours.open_time, hours.close_time, serviceDuration)
         const timezone = business.timezone || 'America/Sao_Paulo'
 
         const { data: booked, error: bookedError } = await supabase.rpc('get_booked_slots', {
@@ -144,7 +147,7 @@ export function PublicBookingFormV2({ business, services, employees, workingHour
         slots = slots.filter((slot) => {
           const [hour, minute] = slot.split(':').map(Number)
           const start = hour * 60 + minute
-          const end = start + service.duration_min
+          const end = start + serviceDuration
 
           return !(booked ?? []).some((appointment: { starts_at: string; ends_at: string }) => {
             const bookedStart = minutesInTimezone(appointment.starts_at, timezone)
