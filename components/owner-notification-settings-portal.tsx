@@ -150,7 +150,7 @@ export function OwnerNotificationSettingsPortal({
         </div>
 
         <p className="mb-4 text-xs leading-5 text-gray-500">
-          Para quem trabalha sozinha, o mais simples é receber os novos horários no WhatsApp e acompanhar tudo pelo sino no topo do AtendePRO.
+          Para quem trabalha por conta própria ou com equipe, o mais simples é receber os novos horários no WhatsApp e acompanhar tudo pela central de avisos do AtendePRO.
         </p>
 
         <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
@@ -166,7 +166,7 @@ export function OwnerNotificationSettingsPortal({
             />
           </div>
           <p className="mt-1 text-[11px] text-gray-400">
-            Pode ser o número da proprietária. As mensagens serão enviadas pela Evolution já configurada acima.
+            Pode ser o número da pessoa responsável pelo negócio. As mensagens serão enviadas pela Evolution já configurada acima.
           </p>
         </div>
 

@@ -107,12 +107,13 @@ export function NotificationsBell() {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="relative rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800"
+        className={`relative inline-flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors ${unread > 0 ? 'border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}
         aria-label={unread ? `${unread} notificações não lidas` : 'Notificações'}
       >
         <Bell className="h-4 w-4" />
+        <span className="hidden text-xs font-semibold sm:inline">Avisos</span>
         {unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+          <span className="ml-0.5 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
             {unread > 9 ? '9+' : unread}
           </span>
         )}

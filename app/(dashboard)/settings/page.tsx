@@ -4,6 +4,7 @@ import { Header } from '@/components/layout/header'
 import { SettingsTabs } from './settings-tabs'
 import { EvolutionSettingsPortal } from '@/components/evolution-settings-portal'
 import { OwnerNotificationSettingsPortal } from '@/components/owner-notification-settings-portal'
+import { SettingsExperiencePolish } from '@/components/settings-experience-polish'
 
 export default async function SettingsPage() {
   const supabase = createClient()
@@ -75,9 +76,13 @@ export default async function SettingsPage() {
       .order('day_of_week'),
   ])
 
+  const deploymentMode = process.env.NEXT_PUBLIC_DEPLOYMENT_MODE || 'selfhosted'
+
   return (
     <>
       <Header title="Configurações" />
+      <SettingsExperiencePolish deploymentMode={deploymentMode} />
+      <div id="atendepro-settings-shell">
       <SettingsTabs
         business={safeBusiness}
         services={services ?? []}
@@ -106,6 +111,7 @@ export default async function SettingsPage() {
         initialNotifyNextAppointment={Boolean(runtimeBusiness.notify_owner_next_appointment)}
         initialNextAppointmentMinutes={runtimeBusiness.owner_next_appointment_minutes ?? 30}
       />
+      </div>
     </>
   )
 }
