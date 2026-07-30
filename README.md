@@ -1,4 +1,4 @@
-# AtendePRO
+# Agelya
 
 Aplicação web para agenda e gestão de profissionais de **beleza e bem-estar**, criada para evoluir como produto próprio.
 
@@ -87,7 +87,8 @@ As migrations estão em `supabase/migrations`. Antes de produção:
 ## Diretrizes do produto
 
 - Idioma padrão: português do Brasil.
-- Identidade atual: AtendePRO, provisória e substituível.
+- Identidade do produto: Agelya.
+- Posicionamento: gestão de agenda, clientes, caixa e relacionamento para beleza e bem-estar.
 - Esta versão é uma fundação técnica; não está auditada para venda imediata.
 - Anamnese e dados de saúde ainda não foram implementados nesta entrega.
 - Integração com Evolution API deve ser feita como módulo separado.
@@ -104,8 +105,7 @@ As migrations estão em `supabase/migrations`. Antes de produção:
 
 ## Licença
 
-O código permanece sob licença MIT. O arquivo `LICENSE` precisa acompanhar cópias ou distribuições substanciais do software. A interface, documentação e identidade visual desta versão foram adaptadas para o AtendePRO.
-
+O código permanece sob licença MIT. O arquivo `LICENSE` precisa acompanhar cópias ou distribuições substanciais do software. A interface, a documentação e a identidade visual desta versão foram adaptadas para a Agelya.
 
 ## Segurança antes do lançamento
 
