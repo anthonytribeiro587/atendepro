@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: atendepro-app:local
+    image: agelya-app:local
     command: node /app/scripts/migrate.js
     env_file:
       - .env
@@ -19,7 +19,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: atendepro-app:local
+    image: agelya-app:local
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -58,4 +58,4 @@ services:
 
 networks:
   default:
-    name: atendepro_network
+    name: agelya_network
