@@ -19,7 +19,7 @@ export default function HomePage() {
             <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#18a999] text-white">
               <CalendarDays className="h-5 w-5" />
             </span>
-            <span className="text-xl">Atende<span className="text-[#18a999]">PRO</span></span>
+            <span className="text-xl">Agelya</span>
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/login" className="hidden rounded-lg px-4 py-2 text-sm font-semibold hover:bg-slate-100 sm:block">Entrar</Link>
@@ -93,7 +93,7 @@ export default function HomePage() {
       </section>
 
       <footer className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-        <p>© 2026 AtendePRO. Versão inicial de desenvolvimento.</p>
+        <p>© 2026 Agelya. Versão inicial de desenvolvimento.</p>
         <div className="flex gap-4"><Link href="/terms">Termos</Link><Link href="/privacy">Privacidade</Link></div>
       </footer>
     </main>

@@ -1,6 +1,6 @@
 export default function OfflinePage() {
   return (
-    <html lang="en">
+    <html lang="pt-BR">
       <body style={{ margin: 0, fontFamily: 'system-ui, sans-serif', background: '#f9fafb' }}>
         <div
           style={{
@@ -12,7 +12,6 @@ export default function OfflinePage() {
           }}
         >
           <div style={{ textAlign: 'center', maxWidth: '400px' }}>
-            {/* Icon */}
             <div
               style={{
                 width: 64,
@@ -45,7 +44,6 @@ export default function OfflinePage() {
               </svg>
             </div>
 
-            {/* Heading */}
             <h1
               style={{
                 fontSize: '24px',
@@ -54,16 +52,14 @@ export default function OfflinePage() {
                 margin: '0 0 8px',
               }}
             >
-              You&apos;re offline
+              Você está sem conexão
             </h1>
 
-            {/* Message */}
             <p style={{ color: '#6b7280', fontSize: '15px', lineHeight: 1.6, margin: '0 0 24px' }}>
-              Check your internet connection. If you already opened the POS terminal this session,
-              you can still complete sales — they will sync automatically when you reconnect.
+              Verifique sua internet. Caso o caixa já tenha sido aberto nesta sessão, as vendas poderão
+              ser sincronizadas automaticamente quando a conexão voltar.
             </p>
 
-            {/* Action */}
             <a
               href="/pos"
               style={{
@@ -77,11 +73,11 @@ export default function OfflinePage() {
                 textDecoration: 'none',
               }}
             >
-              Open POS Terminal
+              Abrir caixa
             </a>
 
             <p style={{ color: '#9ca3af', fontSize: '13px', marginTop: '16px' }}>
-              AtendePRO — Your data, your server.
+              Agelya — organização, atendimento e crescimento.
             </p>
           </div>
         </div>

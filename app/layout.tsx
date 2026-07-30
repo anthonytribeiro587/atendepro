@@ -8,8 +8,8 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: 'AtendePRO — Agenda para beleza e bem-estar',
-    template: '%s | AtendePRO',
+    default: 'Agelya — Agenda para beleza e bem-estar',
+    template: '%s | Agelya',
   },
   description:
     'Agenda online, clientes, serviços, pacotes, caixa e lembretes para profissionais de beleza e bem-estar.',
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     'gestão de clientes',
   ],
   manifest: '/site.webmanifest',
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'AtendePRO' },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Agelya' },
   formatDetection: { telephone: false },
   icons: {
     icon: [
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     apple: '/apple-touch-icon.png',
   },
   openGraph: {
-    title: 'AtendePRO — Agenda para beleza e bem-estar',
+    title: 'Agelya — Agenda para beleza e bem-estar',
     description: 'Organize horários, clientes, serviços, vendas e retornos em um só lugar.',
     images: ['/og-image.png'],
     locale: 'pt_BR',
